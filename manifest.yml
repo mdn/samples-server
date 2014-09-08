@@ -1,0 +1,3 @@
+applications:
+- name: mdn-samples
+  mem: 128M
