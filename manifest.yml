@@ -3,6 +3,9 @@ applications:
   mem: 128M
   instances: 1
   buildpack: https://github.com/ActiveState/heroku-buildpack-php.git
+  services:
+    ${name}-fs:
+      type: filesystem
   stackato:
     hooks:
       post-staging:
