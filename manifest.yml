@@ -1,3 +1,10 @@
 applications:
 - name: mdn-samples
   mem: 128M
+  instances: 1
+  buildpack: https://github.com/ActiveState/heroku-buildpack-php.git
+  stackato:
+    hooks:
+      post-staging:
+        #set up the filesystem
+        - sh www/setup.sh
