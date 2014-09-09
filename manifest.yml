@@ -1,8 +1,0 @@
-applications:
-- name: mdn-samples
-  mem: 128M
-  instances: 1
-  services:
-    ${name}-fs:
-      type: filesystem
-  command: sh www/setup.sh

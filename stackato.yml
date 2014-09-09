@@ -1,0 +1,6 @@
+app-dir: /Volumes/HD/sheppy/Mozilla/paas/mdn-samples
+disk: 2048
+framework:
+  type: php
+memory: 256
+name: mdn-samples
