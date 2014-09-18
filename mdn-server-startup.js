@@ -8,6 +8,21 @@ var fs = require("fs");
 var sys = require("sys");
 var exec = require("child_process").exec;
 
+/////////////////////////
+// Polyfill for bind() //
+/////////////////////////
+
+if (!Function.prototype.bind) { // check if native implementation available
+  Function.prototype.bind = function(){
+    var fn = this, args = Array.prototype.slice.call(arguments),
+        object = args.shift();
+    return function(){
+      return fn.apply(object,
+        args.concat(Array.prototype.slice.call(arguments)));
+    };
+  };
+}
+
 ////////////////////////////
 // Service handler object //
 ////////////////////////////
@@ -34,7 +49,7 @@ function Service(path) {
  * asynchronously.
   */
 Service.prototype.readManifestFile = function() {
-  fs.readFile(this.manifestPath, "utf8", function(err, data) {
+  fs.readFile(this.manifestPath, "utf8", (function(err, data) {
     // Handle errors
 
     if (err) {
@@ -45,7 +60,7 @@ Service.prototype.readManifestFile = function() {
     // We got a result; send it to the handler
 
     this.processManifest(data);
-  });
+  }).bind(this));
 };
 
 /**
@@ -84,8 +99,10 @@ Service.prototype.startupCallback = function(error, stdout, stderr) {
 Service.prototype.processManifest = function(manifest) {
   var startupPath = manifest.name + "/startup.sh";
 
-  console.log("  Running startup script: " + startupPath);
-  exec(startupPath, this.startupCallback);
+  if (fs.existsSync(startupPath)) {
+   console.log("  Running startup script: " + startupPath);
+   exec(startupPath, this.startupCallback);
+  }
 };
 
 
@@ -104,8 +121,6 @@ function readdirCallback(error, files) {
 
         console.log("Starting service: " + path);
         service = new Service(path);
-      } else {
-        console.log("Not a directory: " + path);
       }
     } else {
       console.error("Error getting attributes: " + path);
@@ -117,18 +132,12 @@ function readdirCallback(error, files) {
     return;
   }
 
-  console.log("Got directory!");
-
   if (files.length) {
     for (i=0; i<files.length; i++) {
       path = process.cwd() + "/s/" + files[i];
-      console.log("Checking stat of: " + path);
       fs.stat(path, statCallback);
     }
   }
 }
 
-console.log("Running; cwd is " + process.cwd());
 fs.readdir(process.cwd() + "/s/", readdirCallback);
-console.log("End of line...");
-

@@ -1,0 +1,5 @@
+{
+  "name": "WebSocket based chat server",
+  "docsUrl": "https://developer.mozilla.org/en-US/docs/Web/API/WebSocket_API",
+  "description": "Uses Node.js to set up a WebSocket-based chat server, and provides a web page you can use to join the chat."
+}

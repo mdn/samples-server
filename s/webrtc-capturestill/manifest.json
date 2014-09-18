@@ -1,0 +1,5 @@
+{
+  "name": "WebRTC Still Photo Sample",
+  "docsUrl": "https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API/Taking_still_photos",
+  "description": "Uses WebRTC's getUserMedia() API, a <video> element, and a <canvas> to capture still photos using your webcam."
+}
