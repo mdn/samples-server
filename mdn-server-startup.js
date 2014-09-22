@@ -38,6 +38,7 @@ function Service(path) {
   this.path = path;
   this.manifestPath = path + "/manifest.json";
   this.running = false;
+  this.child = null;
 
   // Now load the service's manifest
 
@@ -114,11 +115,19 @@ Service.prototype.processManifest = function(manifest) {
    // Start up the child process and detach it so it keeps
    // running after we exit.
 
-   var child = spawn(startupPath, [], options);
-   child.unref();
+   this.child = spawn(startupPath, [], options);
+   this.child.unref();
   }
 };
 
+/**
+ * Terminates the service, using the specified signal code.
+ *
+ * @param  {String|Number} signal The signal to use, as a string or number
+ */
+Service.prototype.kill = function(signal) {
+  this.child.kill(signal);
+};
 
 //////////////////
 // Main program //
