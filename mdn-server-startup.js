@@ -7,6 +7,7 @@
 var fs = require("fs");
 var sys = require("sys");
 var exec = require("child_process").exec;
+var spawn = require("child_process").spawn;
 
 /////////////////////////
 // Polyfill for bind() //
@@ -97,11 +98,26 @@ Service.prototype.startupCallback = function(error, stdout, stderr) {
  * @param  {Object} manifest The manifest data.
  */
 Service.prototype.processManifest = function(manifest) {
-  var startupPath = manifest.name + "/startup.sh";
+  var startupPath = this.path + "/startup.sh";
+  var options;
 
   if (fs.existsSync(startupPath)) {
-   console.log("  Running startup script: " + startupPath);
-   exec(startupPath, this.startupCallback);
+    console.log("  Running startup script: " + startupPath);
+
+    // Build an options object for the script spawn()
+
+     options = {
+      cwd: this.path,
+      env: process.env,
+      detached: true,
+      stdio: "inherit"
+     };
+
+   // Start up the child process and detach it so it keeps
+   // running after we exit.
+
+   var child = spawn(startupPath, [], options);
+   child.unref();
   }
 };
 
@@ -113,6 +129,7 @@ Service.prototype.processManifest = function(manifest) {
 function readdirCallback(error, files) {
   var i;
   var path;
+  var stats;
 
   function statCallback(err, stats) {
     if (!err) {
@@ -135,7 +152,8 @@ function readdirCallback(error, files) {
   if (files.length) {
     for (i=0; i<files.length; i++) {
       path = process.cwd() + "/s/" + files[i];
-      fs.stat(path, statCallback);
+      stats = fs.statSync(path);
+      statCallback(0, stats);
     }
   }
 }

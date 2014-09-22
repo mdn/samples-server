@@ -7,11 +7,13 @@
 // Requires the websocket module.
 //
 
-var WebSocketServer = require('./node_modules/websocket/lib/WebSocketServer');
+"use strict";
+
 var http = require('http');
 var url = require('url');
 var fs = require('fs');
-var connectionArray = new Array();
+var WebSocketServer = require('./node_modules/websocket/lib/WebSocketServer');
+var connectionArray = [];
 var nextID = Date.now();
 var appendToMakeUnique = 1;
 
@@ -25,16 +27,17 @@ server.listen(6502, function() {
     console.log((new Date()) + " Server is listening on port 6502");
 });
 
-wsServer = new WebSocketServer({
+var wsServer = new WebSocketServer({
     httpServer: server,
     autoAcceptConnections: true
 });
 
 function isUsernameUnique(name) {
   var isUnique = true;
+  var i;
 
   for (i=0; i<connectionArray.length; i++) {
-    if (connectionArray[i].username == name) {
+    if (connectionArray[i].username === name) {
       isUnique = false;
       break;
     }
@@ -44,9 +47,10 @@ function isUsernameUnique(name) {
 
 function getConnectionForID(id) {
   var connect = null;
+  var i;
 
   for (i=0; i<connectionArray.length; i++) {
-    if (connectionArray[i].clientID == id) {
+    if (connectionArray[i].clientID === id) {
       connect = connectionArray[i];
       break;
     }
@@ -58,8 +62,9 @@ function getConnectionForID(id) {
 function makeUserListMessage() {
   var userListMsg = {
     type: "userlist",
-    users: new Array()
+    users: []
   };
+  var i;
 
   // Add the users to the list
 
@@ -73,6 +78,7 @@ function makeUserListMessage() {
 function sendUserListToAll() {
   var userListMsg = makeUserListMessage();
   var userListMsgStr = JSON.stringify(userListMsg);
+  var i;
 
   for (i=0; i<connectionArray.length; i++) {
     connectionArray[i].sendUTF(userListMsgStr);
@@ -102,7 +108,7 @@ wsServer.on('connect', function(connection) {
             // Process messages
 
             var sendToClients = true;
-            var msg = JSON.parse(message.utf8Data);
+            msg = JSON.parse(message.utf8Data);
             var connect = getConnectionForID(msg.id);
 
             switch(msg.type) {
@@ -138,6 +144,7 @@ wsServer.on('connect', function(connection) {
 
             if (sendToClients) {
               var msgString = JSON.stringify(msg);
+              var i;
 
               for (i=0; i<connectionArray.length; i++) {
                 connectionArray[i].sendUTF(msgString);
