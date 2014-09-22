@@ -102,8 +102,6 @@ Service.prototype.processManifest = function(manifest) {
   var options;
 
   if (fs.existsSync(startupPath)) {
-    console.log("  Running startup script: " + startupPath);
-
     // Build an options object for the script spawn()
 
      options = {
