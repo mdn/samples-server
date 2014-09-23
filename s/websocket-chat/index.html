@@ -3,8 +3,11 @@
 <head>
   <title>WebSocket Chat Demo</title>
   <script type="text/javascript">
+    "use strict";
     var connection = null;
     var clientID = 0;
+
+    var WebSocket = WebSocket || MozWebSocket;
 
     function setUsername() {
       var msg = {
@@ -18,11 +21,7 @@
 
     function connect() {
       var serverUrl = "ws://localhost:6502";
-      try {
-        connection = new WebSocket(serverUrl);
-      } catch(e) {
-        connection = new MozWebSocket(serverUrl);
-      }
+      connection = new WebSocket(serverUrl);
 
       connection.onopen = function(evt) {
         document.getElementById("text").disabled = false;
@@ -48,10 +47,12 @@
             text = "(" + timeStr + ") <b>" + msg.name + "</b>: " + msg.text + "<br>";
             break;
           case "rejectusername":
-            text = "<b>Your username has been set to <em>" + msg.name + "</em> because the name you chose is in use.</b><br>"
+            text = "<b>Your username has been set to <em>" + msg.name + "</em> because the name you chose is in use.</b><br>";
             break;
           case "userlist":
             var ul = "";
+            var i;
+
             for (i=0; i < msg.users.length; i++) {
               ul += msg.users[i] + "<br>";
             }
@@ -78,7 +79,7 @@
     }
 
     function handleKey(evt) {
-      if (evt.keyCode == 13 || evt.keyCode == 14) {
+      if (evt.keyCode === 13 || evt.keyCode === 14) {
         if (!document.getElementById("send").disabled) {
           send();
         }
