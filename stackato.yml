@@ -4,3 +4,8 @@ framework:
   type: php
 memory: 256
 name: mdn-samples
+hooks:
+  pre-staging:
+    - node preprocess.js
+  pre-running:
+    - node mdn-server-startup.js

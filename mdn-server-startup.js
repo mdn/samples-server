@@ -94,6 +94,7 @@ Service.prototype.startupCallback = function(error, stdout, stderr) {
  * docsUrl: An URL to the page on MDN that uses the sample. If multiple
  *          pages use this service, the primary one should be linked.
  * description: Descriptive text about the service.
+ * ports: The number of ports the service needs.
  *
 
  * @param  {Object} manifest The manifest data.
@@ -101,6 +102,8 @@ Service.prototype.startupCallback = function(error, stdout, stderr) {
 Service.prototype.processManifest = function(manifest) {
   var startupPath = this.path + "/startup.sh";
   var options;
+
+  var numPorts = manifest.ports;
 
   if (fs.existsSync(startupPath)) {
     // Build an options object for the script spawn()

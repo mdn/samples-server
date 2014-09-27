@@ -20,7 +20,7 @@
     }
 
     function connect() {
-      var serverUrl = "ws://localhost:6502";
+      var serverUrl = "ws://" + window.location.hostname + ":6502";
       connection = new WebSocket(serverUrl);
 
       connection.onopen = function(evt) {
