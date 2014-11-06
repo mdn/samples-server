@@ -4,6 +4,8 @@ framework:
   type: php
 memory: 256
 name: mdn-samples
+services:
+  disk: filesystem
 hooks:
   pre-staging:
     - node preprocess.js
