@@ -10,7 +10,7 @@
 "use strict";
 
 var fs = require("fs");
-var sys = require("sys");
+var util = require("util");
 
 /////////////////////////
 // Polyfill for bind() //

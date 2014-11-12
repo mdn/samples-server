@@ -9,5 +9,9 @@ services:
 hooks:
   pre-staging:
     - node preprocess.js
+  post-staging:
+    - npm install fs
+    - npm install util
+    - npm install child_process
   pre-running:
     - node mdn-server-startup.js

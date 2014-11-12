@@ -5,9 +5,14 @@
 "use strict";
 
 var fs = require("fs");
-var sys = require("sys");
+var sys = require("util");
 var exec = require("child_process").exec;
 var spawn = require("child_process").spawn;
+var pathJoin = require("path").join;
+var env = process.env;
+
+var diskPath = env.STACKATO_FILESYSTEM_DISK || "/var/log";
+var logPath = pathJoin(diskPath, "startup.log");
 
 /////////////////////////
 // Polyfill for bind() //
@@ -22,6 +27,17 @@ if (!Function.prototype.bind) { // check if native implementation available
         args.concat(Array.prototype.slice.call(arguments)));
     };
   };
+}
+
+/**
+* Output text to the log file.
+*
+**/
+function log(msg) {
+  msg = "[" + Date.now().toLocaleString() + "] " + msg;
+  console.log(msg);
+  console.log("FS: ", fs);
+  //fs.appendFileSync(logPath, msg);
 }
 
 ////////////////////////////
@@ -40,26 +56,15 @@ function Service(path) {
   this.env = process.env;
   this.running = false;
   this.child = null;
-  this.diskPath = this.env["STACKATO_FILESYSTEM_DISK"];
-  
+
   // Set up the startup log
-  
-  this.logPath = path.join(diskPath, "startup.log");
-  this.log("*** LOG BEGINS ***\n");
+
+  log("*** LOG BEGINS ***\n");
 
   // Now load the service's manifest
 
   this.readManifestFile();
 }
-
-/**
- * Output text to the log file.
- *
- **/
-Service.prototype.log = function(msg) {
-  msg = "[" + Date.now().toLocaleString() + "] " + msg;
-  fs.appendFile(this.logPath, msg);
-};
 
 /**
  * Read the contents of the specified file, parse it as JSON,
@@ -71,7 +76,7 @@ Service.prototype.readManifestFile = function() {
     // Handle errors
 
     if (err) {
-      this.log("Error reading manifest file " + this.manifestPath + ": " + err);
+      log("Error reading manifest file " + this.manifestPath + ": " + err);
       return;
     }
 
@@ -91,10 +96,10 @@ Service.prototype.readManifestFile = function() {
 Service.prototype.startupCallback = function(error, stdout, stderr) {
   if (!error) {
     // success! do nothing
-    this.log(stdout);
+    log(stdout);
     this.running = true;
   } else {
-    this.log(stderr);
+    log(stderr);
     this.running = false;
   }
 };
@@ -162,16 +167,16 @@ function readdirCallback(error, files) {
       if (stats.isDirectory()) {
         var service;
 
-        this.log("Starting service: " + path);
+        log("Starting service: " + path);
         service = new Service(path);
       }
     } else {
-      this.log("Error getting attributes: " + path);
+      log("Error getting attributes: " + path);
     }
   }
 
   if (error) {
-    this.log("Error reading the service directory");
+    log("Error reading the service directory");
     return;
   }
 
