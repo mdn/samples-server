@@ -6,6 +6,7 @@ memory: 256
 name: mdn-samples
 services:
   disk: filesystem
+  websocket-chat-port: harbor
 hooks:
   pre-staging:
     - node preprocess.js

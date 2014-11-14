@@ -12,7 +12,10 @@
 var http = require('http');
 var url = require('url');
 var fs = require('fs');
-var WebSocketServer = require('WebSocketServer');
+var WebSocketServer = require('websocket/lib/WebSocketServer');
+
+var port = process.env.stackato_harbor_websocket_chat_port;
+
 var connectionArray = [];
 var nextID = Date.now();
 var appendToMakeUnique = 1;
