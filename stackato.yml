@@ -1,12 +1,11 @@
-app-dir: /Volumes/HD/sheppy/Mozilla/paas/mdn-samples
-disk: 2048
+disk: 2048M
 framework:
   type: php
-memory: 256
+memory: 256M
 name: mdn-samples
 services:
   disk: filesystem
-  websocket-chat-port: harbor
+#  websocket-chat-port: harbor
 hooks:
   pre-staging:
     - node preprocess.js
