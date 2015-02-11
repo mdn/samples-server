@@ -18,11 +18,6 @@ yum update -y
 
 yum groupinstall -y "Web Server" "PHP Support"
 yum install -y nodejs
-yum install -y npm
-
-# Now install needed Node packages
-
-npm install ws
 
 # Start up the Web server
 
@@ -33,16 +28,17 @@ systemctl enable httpd.service
 
 groupadd www
 usermod -a -G www ec2-user
-
-# Fetch the site content from github and install it
-
-wget git@github.com:a2sheppy/mdn-samples.git /tmp/mdn-samples.git
-unzip /tmp/mdn-samples-master.zip 
-rm -r /var/www
-mv /tmp/mdn-samples-master /var/www/html
-
+mkdir /var/www/html
 chown -R root:www /var/www
 chmod 2775 /var/www
+
+# Ensure that sshd is set up right and start it
+
+chmod 711 /var/empty/sshd
+chmod 600 /etc/ssh/*_key
+
+systemctl start sshd.service &> /var/www/html/ssh-start.txt
+systemctl status sshd.service > /var/www/html/ssh-status2.txt
 
 # Update permissions of Web content: Directories
 
@@ -52,16 +48,5 @@ find /var/www -type d -exec chmod 2775 {} +
 
 find /var/www -type f -exec chmod 0664 {} +
 
-# Ensure that sshd is set up right and start it
-
-chmod 711 /var/empty/sshd
-chmod 600 /etc/ssh/*_key
-systemctl start sshd.service
-
 # Start spinning up Sample Server stuff here
 
-#ls -l /var/empty > /var/www/html/output1.txt
-#systemctl status sshd.service > /var/www/html/ssh-status1.txt
-#ls -l /etc/ssh > /var/www/html/ssh-dir-listing.txt
-#systemctl start sshd.service &> /var/www/html/ssh-start.txt
-#systemctl status sshd.service > /var/www/html/ssh-status2.txt
