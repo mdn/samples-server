@@ -29,8 +29,10 @@ function startup() {
     },
     function(stream) {
       if (navigator.mozGetUserMedia) {
+        console.log("navigator.moz; video: " + video);
         video.mozSrcObject = stream;
       } else {
+        console.log("Standard; video: " + video);
         var vendorURL = window.URL || window.webkitURL;
         video.src = vendorURL.createObjectURL(stream);
       }
