@@ -48,8 +48,6 @@
         console.log("An error occured! " + err);
       }
     );
-  
-    clearphoto();
 
     video.addEventListener('canplay', function(ev){
       if (!streaming) {
@@ -74,6 +72,8 @@
       takepicture();
       ev.preventDefault();
     }, false);
+    
+    clearphoto();
   }
 
   // Fill the photo with an indication that none has been
@@ -87,7 +87,7 @@
     var data = canvas.toDataURL('image/png');
     photo.setAttribute('src', data);
   }
-
+  
   // Capture a photo by fetching the current contents of the video
   // and drawing it into a canvas, then converting that to a PNG
   // format data URL. By drawing it on an offscreen canvas and then
