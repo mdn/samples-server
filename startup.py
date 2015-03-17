@@ -21,7 +21,15 @@ def startService(path):
     
     subprocess.Popen(["/bin/sh", startupScript], cwd = path)
 
+#
+# Main program
+#
+
+# Get the home directory, tack on "/s", and get a list of the
+# contents of that directory
+
 homeDir = os.getcwd()
+print("Home directory: " + homeDir)
 if not homeDir.endswith("/"):
   homeDir += "/"
 serviceDir = homeDir + "s"
