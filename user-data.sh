@@ -18,6 +18,7 @@ yum update -y
 
 yum groupinstall -y "Web Server" "PHP Support"
 yum install -y nodejs
+yum install -y npm
 
 # Create a group for the Web content and add the default user to it
 
