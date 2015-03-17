@@ -22,7 +22,9 @@ def startService(path):
     subprocess.Popen(["/bin/sh", startupScript], cwd = path)
 
 homeDir = os.getcwd()
-serviceDir = homeDir + "/s"
+if !homeDir.endswith("/")
+  homeDir+= '/'
+serviceDir = homeDir + "s"
 
 serviceList = os.listdir(serviceDir)
 
