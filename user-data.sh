@@ -32,8 +32,6 @@ chmod 600 /etc/ssh/*_key
 systemctl start sshd.service
 
 # Pull the latest sample server contents
-# (this probably should move into something we spawn off
-#  as a new, backgrounded, task)
 
 git clone https://github.com/a2sheppy/mdn-samples /var/www/html
 
@@ -56,3 +54,4 @@ systemctl enable httpd.service
 
 # Start spinning up Sample Server stuff here
 
+/bin/python /var/www/html/startup.py &
