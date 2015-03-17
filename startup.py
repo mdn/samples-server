@@ -29,7 +29,6 @@ def startService(path):
 # contents of that directory
 
 scriptDir = os.path.dirname(os.path.abspath(__file__))
-print("Web directory: " + scriptDir)
 if not scriptDir.endswith("/"):
   scriptDir += "/"
 serviceDir = scriptDir + "s"
