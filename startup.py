@@ -25,14 +25,14 @@ def startService(path):
 # Main program
 #
 
-# Get the home directory, tack on "/s", and get a list of the
+# Get the Web content directory, tack on "/s", and get a list of the
 # contents of that directory
 
-homeDir = os.getcwd()
-print("Home directory: " + homeDir)
-if not homeDir.endswith("/"):
-  homeDir += "/"
-serviceDir = homeDir + "s"
+scriptDir = os.path.dirname(os.path.abspath(__file__))
+print("Web directory: " + scriptDir)
+if not scriptDir.endswith("/"):
+  scriptDir += "/"
+serviceDir = scriptDir + "s"
 
 serviceList = os.listdir(serviceDir)
 
