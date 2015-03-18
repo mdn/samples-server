@@ -185,3 +185,5 @@ wsServer.on('connect', function(connection) {
     console.log((new Date()) + " Peer " + connection.remoteAddress + " disconnected.");
   });
 });
+
+console.log("End of line.");
