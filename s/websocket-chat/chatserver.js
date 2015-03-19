@@ -94,8 +94,6 @@ function sendUserListToAll() {
   }
 }
 
-console.log("Adding connection listener...");
-
 wsServer.on('connect', function(connection) {
 //  if (!originIsAllowed(connection.origin)) {
 //    request.reject();
@@ -161,7 +159,8 @@ wsServer.on('connect', function(connection) {
               break;
           }
 
-          // Convert the message back to JSON and send it.
+          // Convert the message back to JSON and send it out
+          // to all clients.
 
           if (sendToClients) {
             var msgString = JSON.stringify(msg);
@@ -185,5 +184,3 @@ wsServer.on('connect', function(connection) {
     console.log((new Date()) + " Peer " + connection.remoteAddress + " disconnected.");
   });
 });
-
-console.log("End of line.");

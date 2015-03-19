@@ -11,6 +11,8 @@ import subprocess
 # startService
 #
 # Given a path, start up the service contained in that directory.
+# This is done by running the "startup.sh" script in each directory.
+# The bash shell is used.
 #
 def startService(path):
   print("Starting service: " + path)
@@ -19,7 +21,7 @@ def startService(path):
   if os.path.exists(startupScript):
     sys.stdout.flush()
     
-    subprocess.Popen(["/bin/sh", startupScript], cwd = path)
+    subprocess.Popen(["/bin/bash", startupScript], cwd = path)
 
 #
 # Main program
