@@ -10,10 +10,6 @@
 #    http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-LAMP.html
 #
 
-# Update existing software
-
-yum update -y
-
 # Install packages needed for Web server support
 
 yum groupinstall -y "Web Server" "PHP Support"
@@ -25,34 +21,18 @@ yum install -y npm
 groupadd www
 usermod -a -G www ec2-user
 
-# Ensure that sshd is set up right and start it
-
-chmod 711 /var/empty/sshd
-chmod 600 /etc/ssh/*_key
-
-systemctl start sshd.service
-
-# Pull the latest sample server contents
+# Pull the latest sample server contents so we have a starting point
 
 git clone https://github.com/a2sheppy/mdn-samples /var/www/html
 
-# Set owner of the web tree
+# Pull the main startup script from github
 
-chown -R root:www /var/www
+curl https://raw.githubusercontent.com/a2sheppy/mdn-samples/master/setup.sh > /usr/local/bin/setup.sh
+chmod +x /usr/local/bin/setup.sh
 
-# Update permissions of Web content: Directories
+# Create the service that will run the startup script on boot
 
-find /var/www -type d -exec chmod 2775 {} +
+# Run the startup script; this will update the operating system and
+# system tools, then pull the latest code from Github
 
-# Update permissions of Web content: Files
-
-find /var/www -type f -exec chmod 0664 {} +
-
-# Start up the Web server now that content is in place
-
-systemctl start  httpd.service
-systemctl enable httpd.service
-
-# Start spinning up Sample Server stuff here
-
-/bin/python /var/www/html/startup.py &
+/usr/local/bin/setup.sh
