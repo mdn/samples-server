@@ -23,11 +23,11 @@ usermod -a -G www ec2-user
 
 # Pull the latest sample server contents so we have a starting point
 
-git clone https://github.com/a2sheppy/mdn-samples /var/www/html
+git clone https://github.com/mdn/samples-server /var/www/html
 
 # Pull the main startup script from github
 
-curl https://raw.githubusercontent.com/a2sheppy/mdn-samples/master/update.sh > /usr/local/bin/update.sh
+curl https://raw.githubusercontent.com/mdn/samples-server/master/update.sh > /usr/local/bin/update.sh
 chmod +x /usr/local/bin/update.sh
 
 # Create the service that will run the startup script on boot
