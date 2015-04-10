@@ -27,12 +27,12 @@ git clone https://github.com/a2sheppy/mdn-samples /var/www/html
 
 # Pull the main startup script from github
 
-curl https://raw.githubusercontent.com/a2sheppy/mdn-samples/master/setup.sh > /usr/local/bin/setup.sh
-chmod +x /usr/local/bin/setup.sh
+curl https://raw.githubusercontent.com/a2sheppy/mdn-samples/master/update.sh > /usr/local/bin/update.sh
+chmod +x /usr/local/bin/update.sh
 
 # Create the service that will run the startup script on boot
 
 # Run the startup script; this will update the operating system and
 # system tools, then pull the latest code from Github
 
-/usr/local/bin/setup.sh
+/usr/local/bin/update.sh
