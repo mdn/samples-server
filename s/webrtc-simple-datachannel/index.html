@@ -13,9 +13,16 @@
   <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API/Simple_RTCDataChannel_sample">
   corresponding article</a> for details on how it works.</p>
   
-  <label for="message">Enter a message:
-    <input type="text" name="message" id="message" placeholder="Message text">
-  </label>
-  <button id="sendButton" name="sendButton">Send</button>
+  <div class="controlbox">
+    <button id="connectButton" name="connectButton" class="buttonleft">Connect</button>
+    <button id="disconnectButton" name="disconnectButton" class="buttonright" disabled>Disconnect</button>
+  </div>
+  
+  <div class="messagebox">
+    <label for="message">Enter a message:
+      <input type="text" name="message" id="message" placeholder="Message text">
+    </label>
+    <button id="sendButton" name="sendButton" class="buttonright" disabled>Send</button>
+  </div>
 </body>
 </html
