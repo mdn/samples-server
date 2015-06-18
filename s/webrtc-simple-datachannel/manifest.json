@@ -1,0 +1,5 @@
+{
+  "name": "WebRTC Simple RTCDataChannel sample",
+  "docsUrl": "https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API/Simple_RTCDataChannel_sample",
+  "description": "A simple example using a WebRTC data channel to signal between two objects on the same page."
+}
