@@ -24,9 +24,9 @@
     sendButton = document.getElementById('sendButton');
     messageInputBox = document.getElementById('message');
     receiveBox = document.getElementById('receivebox');
-    
+
     // Set event listeners for user interface widgets
-    
+
     connectButton.addEventListener('click', connectPeers, false);
     disconnectButton.addEventListener('click', disconnectPeers, false);
     sendButton.addEventListener('click', sendMessage, false);
@@ -37,61 +37,41 @@
   // bypass that step.
   
   function connectPeers() {
-    // Create the local connection and its data channel
+    // Create the local connection and its event listeners
     
     localConnection = new RTCPeerConnection();
+    
+    // Create the data channel and establish its event listeners
     sendChannel = localConnection.createDataChannel("sendChannel");
-    
-    // Set up local event listeners
-    
-    localConnection.onicecandidate = localICECallback;
     sendChannel.onopen = handleSendChannelStatusChange;
     sendChannel.onclose = handleSendChannelStatusChange;
     
-    // Create the remote connection and its channel
+    // Create the remote connection and its event listeners
     
     remoteConnection = new RTCPeerConnection();
-    
-    // Set up remote event listeners
-    
-    remoteConnection.onicecandidate = remoteICECallback;
     remoteConnection.ondatachannel = receiveChannelCallback;
     
-    // Now create an offer to connect
+    // Set up the ICE candidates for the two peers
     
-    localConnection.createOffer(gotLocalDescription,
-          handleCreateDescriptionError);
+    localConnection.onicecandidate = e => !e.candidate
+        || remoteConnection.addIceCandidate(e.candidate)
+        .catch(handleAddCandidateError);
+
+    remoteConnection.onicecandidate = e => !e.candidate
+        || localConnection.addIceCandidate(e.candidate)
+        .catch(handleAddCandidateError);
     
-    // Update UI elements to reflect that the connection is in
-    // the process of opening
+    // Now create an offer to connect; this starts the process
     
-    connectButton.disabled = true;
-    disconnectButton.disabled = false;
+    localConnection.createOffer()
+    .then(offer => localConnection.setLocalDescription(offer))
+    .then(() => remoteConnection.setRemoteDescription(localConnection.localDescription))
+    .then(() => remoteConnection.createAnswer())
+    .then(answer => remoteConnection.setLocalDescription(answer))
+    .then(() => localConnection.setRemoteDescription(remoteConnection.localDescription))
+    .catch(handleCreateDescriptionError);
   }
-  
-  // Callback executed when the createOffer() request for the
-  // local connection is finished.
-  
-  function gotLocalDescription(theDescription) {
-    localConnection.setLocalDescription(theDescription);
     
-    // Since we're also the remote machine, we're going to
-    // kick off the answer process here.
-    
-    remoteConnection.setRemoteDescription(theDescription);
-    remoteConnection.createAnswer(gotRemoteDescription,
-          handleCreateDescriptionError);
-  }
-  
-  // Handle ICE callbacks for the local connection.
-  
-  function localICECallback(event) {
-    if (event.candidate) {
-      remoteConnection.addIceCandidate(event.candidate, handleAddCandidateSuccess,
-              handleAddCandidateError);
-    }
-  }
-  
   // Callback executed when the createAnswer() request for
   // the remote connection finishes up.
   
@@ -105,7 +85,7 @@
   function remoteICECallback(event) {
     if (event.candidate) {
       localConnection.addIceCandidate(event.candidate,
-              handleAddCandidateSuccess, handleAddCandidateError);
+              handleLocalAddCandidateSuccess, handleRemoteAddCandidateError);
     }
   }
   
@@ -118,10 +98,18 @@
     console.log("Unable to create an offer: " + error.toString());
   }
   
-  // Handle successful addition of ICE candidate.
+  // Handle successful addition of the ICE candidate
+  // on the "local" end of the connection.
   
-  function handleAddCandidateSuccess() {
-    console.log("Yay! addICECandidate succeeded!");
+  function handleLocalAddCandidateSuccess() {
+    connectButton.disabled = true;
+  }
+
+  // Handle successful addition of the ICE candidate
+  // on the "remote" end of the connection.
+  
+  function handleRemoteAddCandidateSuccess() {
+    disconnectButton.disabled = false;
   }
 
   // Handle an error that occurs during addition of ICE candidate.
