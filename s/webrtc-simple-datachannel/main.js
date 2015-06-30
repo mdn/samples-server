@@ -136,7 +136,8 @@
     }
   }
   
-  // Handle events that occur on the receiver's channel.
+  // Called when the connection opens and the data
+  // channel is ready to be connected to the remote.
   
   function receiveChannelCallback(event) {
     receiveChannel = event.channel;
@@ -158,7 +159,7 @@
   
   // Handle status changes on the receiver's channel.
   
-  function handleReceiveChannelStatusChange() {
+  function handleReceiveChannelStatusChange(event) {
     if (receiveChannel) {
       console.log("Receive channel's status has changed to " +
                   receiveChannel.readyState);
