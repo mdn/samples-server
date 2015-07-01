@@ -115,13 +115,15 @@
     messageInputBox.focus();
   }
   
-  // Handle status changes on the send channel.
+  // Handle status changes on the local end of the data
+  // channel; this is the end doing the sending of data
+  // in this example.
   
-  function handleSendChannelStatusChange() {
+  function handleSendChannelStatusChange(event) {
     if (sendChannel) {
       var state = sendChannel.readyState;
     
-      if (sendChannel.readyState === "open") {
+      if (state === "open") {
         messageInputBox.disabled = false;
         messageInputBox.focus();
         sendButton.disabled = false;
