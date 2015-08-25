@@ -71,14 +71,6 @@
     .then(() => localConnection.setRemoteDescription(remoteConnection.localDescription))
     .catch(handleCreateDescriptionError);
   }
-    
-  // Callback executed when the createAnswer() request for
-  // the remote connection finishes up.
-  
-  function gotRemoteDescription(theDescription) {
-    remoteConnection.setLocalDescription(theDescription);
-    localConnection.setRemoteDescription(theDescription);
-  }
   
   // Handle ICE callback for the remote connection.
   
