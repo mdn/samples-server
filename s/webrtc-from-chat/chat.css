@@ -1,0 +1,13 @@
+#userlistbox {
+  border: 1px solid black;
+  width:100%;
+  height:100%;
+  padding:1px;
+  list-style:none;
+  display:block;
+}
+
+#userlistbox li {
+  cursor: pointer;
+  padding: 1px;
+}

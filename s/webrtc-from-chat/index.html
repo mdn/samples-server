@@ -1,0 +1,133 @@
+<!doctype html>
+<html>
+<head>
+  <title>WebSocket Chat Demo with WebRTC Calling</title>
+  <link href="chat.css" rel="stylesheet">
+  <script type="text/javascript">
+    "use strict";
+    var connection = null;
+    var clientID = 0;
+
+    var WebSocket = WebSocket || MozWebSocket;
+
+    // Called when the "id" message is received; this message is sent by the
+    // server to assign this login session a unique ID number; in response,
+    // this function sends a "username" message to set our username for this
+    // session.
+    function setUsername() {
+      var msg = {
+        name: document.getElementById("name").value,
+        date: Date.now(),
+        id: clientID,
+        type: "username"
+      };
+      connection.send(JSON.stringify(msg));
+    }
+
+    function connect() {
+      var serverUrl = "ws://" + window.location.hostname + ":6503";
+
+      connection = new WebSocket(serverUrl);
+
+      connection.onopen = function(evt) {
+        document.getElementById("text").disabled = false;
+        document.getElementById("send").disabled = false;
+      };
+
+      connection.onmessage = function(evt) {
+        var f = document.getElementById("chatbox").contentDocument;
+        var text = "";
+        var msg = JSON.parse(evt.data);
+        console.log("Message received: ");
+        console.dir(msg);
+        var time = new Date(msg.date);
+        var timeStr = time.toLocaleTimeString();
+
+        switch(msg.type) {
+          case "id":
+            clientID = msg.id;
+            setUsername();
+            break;
+          case "username":
+            text = "<b>User <em>" + msg.name + "</em> signed in at " + timeStr + "</b><br>";
+            break;
+          case "message":
+            text = "(" + timeStr + ") <b>" + msg.name + "</b>: " + msg.text + "<br>";
+            break;
+          case "rejectusername":
+            text = "<b>Your username has been set to <em>" + msg.name + "</em> because the name you chose is in use.</b><br>";
+            break;
+          case "userlist":
+            var ul = "";
+            var i;
+
+            for (i=0; i < msg.users.length; i++) {
+              ul += "<li>" + msg.users[i] + "</li>";
+            }
+            document.getElementById("userlistbox").innerHTML = ul;
+            break;
+          case "video": // Invited to a video call
+            
+            break;
+        }
+
+        if (text.length) {
+          f.write(text);
+          document.getElementById("chatbox").contentWindow.scrollByPages(1);
+        }
+      };
+    }
+
+    // Send a text message to the chat room.
+    function send() {
+      var msg = {
+        text: document.getElementById("text").value,
+        type: "message",
+        id: clientID,
+        date: Date.now()
+      };
+      connection.send(JSON.stringify(msg));
+      document.getElementById("text").value = "";
+    }
+
+    // Handler for keyboard events. This is used to intercept the return and
+    // enter keys and use them to send the message to the server.
+    function handleKey(evt) {
+      if (evt.keyCode === 13 || evt.keyCode === 14) {
+        if (!document.getElementById("send").disabled) {
+          send();
+        }
+      }
+    }
+  </script>
+</head>
+<body>
+  <p>This is a simple chat system implemented using WebSockets. It works by
+  sending packets of JSON back and forth with the server. Click a username
+  in the user list to ask them to enter a one-on-one video chat with you.</p>
+  <p>Enter a username: <input id="name" type="text" maxlength="12" placeholder="Your name">
+  <input type="button" name="login" value="Log in" onclick="connect()"></p>
+  <table border="0" width="100%">
+  <tr height="100%">
+  <td width="120px" align="top" border="1" height="100%">
+  <ul id="userlistbox"></ul>
+  </td>
+  <td>
+  <iframe width="100%" height="740px" id="chatbox" srcdoc="<body><p>Welcome!</p></body>"></iframe>
+  </td>
+  <td>
+    <video id="received_video" style="width:480px; height:360px;"></video>
+    <br>
+    <video id="local_video" style="width:480px; height:360px;"></video>
+  </td>
+  <tr>
+  <td>&nbsp;</td>
+  <td>
+  <p>
+  Chat: <input id="text" type="text" name="text" size="80" maxlength="256" placeholder="Chat with us!" autocomplete="off"onkeyup="handleKey(event)" disabled>
+  <input type="button" id="send" name="send" value="Send" onclick="send()" disabled></p></td>
+  </td>
+  </tr>
+  </table>
+</body>
+</html>
