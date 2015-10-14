@@ -182,11 +182,18 @@ wsServer.on('connect', function(connection) {
               sendUserListToAll();
               sendToClients = false;  // We already sent the proper responses
               break;
+            
+            // Invite a user to join. We add the caller's username as the call
+            // ID before sending the message along to the destination
+            case "video-invite":
+              msg.callID = connect.username;
+              // *** send only to the user specified by msg.callee ***
+              break;
               
             // Join (or create) a video call channel, identified by a callID
             // which is created by the channel creator and sent to the
             // callee.
-            case "video":
+            case "video-join":
               if (msg.callID !== undefined) {
                 if (webrtc_chats[msg.callID] === undefined) { // New channel?
                   webrtc_chats[msg.callID] = {};
@@ -202,7 +209,10 @@ wsServer.on('connect', function(connection) {
           }
           
           // Convert the revised message back to JSON and send it out
-          // to all clients, if doing so is necessary.
+          // to all clients, if doing so is necessary. Note that we
+          // pass through unmolested any messages not specifically handled
+          // in the select block above. This allows the clients to
+          // exchange signaling and other control objects unimpeded.
 
           if (sendToClients) {
             var msgString = JSON.stringify(msg);
@@ -236,6 +246,6 @@ wsServer.on('connect', function(connection) {
       });
     });
     sendUserListToAll();  // Update the user lists
-    console.log((new Date()) + " Peer " + connection.remoteAddress + " disconnected.");
+    console.log((new Date()) + " Peer disconnected.");
   });
 });

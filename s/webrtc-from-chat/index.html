@@ -5,10 +5,29 @@
   <link href="chat.css" rel="stylesheet">
   <script type="text/javascript">
     "use strict";
+    
+    // WebSocket chat/signaling channel variables.
+    
     var connection = null;
     var clientID = 0;
 
     var WebSocket = WebSocket || MozWebSocket;
+
+    // WebRTC connection variables.
+    
+    var stunServer = "stun.l.google.com:19302";   // Use your own!
+    
+    var callID = null;    // Unique ID for this call
+    var myPeerConnection = null;    // RTCPeerConnection
+
+    // Handle WebRTC prefixes.
+    
+    window.RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || 
+                           window.webkitRTCPeerConnection || window.msRTCPeerConnection;
+    window.RTCSessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription ||
+                           window.webkitRTCSessionDescription || window.msRTCSessionDescription;
+    navigator.getUserMedia = navigator.getUserMedia || navigator.mozGetUserMedia ||
+                           navigator.webkitGetUserMedia || navigator.msGetUserMedia;
 
     // Called when the "id" message is received; this message is sent by the
     // server to assign this login session a unique ID number; in response,
@@ -60,14 +79,29 @@
           case "userlist":
             var ul = "";
             var i;
+            
+            var listElem = document.getElementById("userlistbox");
+            
+            // Remove all current list members. We could do this smarter,
+            // by adding and updating users instead of rebuilding from
+            // scratch but this will do for this sample.
+            
+            while (listElem.firstChild) {
+              listElem.removeChild(listElem.firstChild);
+            }
+            
+            // Add member names from the received list
 
             for (i=0; i < msg.users.length; i++) {
-              ul += "<li>" + msg.users[i] + "</li>";
+              var item = document.createElement("li");
+              item.appendChild(document.createTextNode(msg.users[i]));
+              item.addEventListener("click", invite, false);
+              
+              listElem.appendChild(item);
             }
-            document.getElementById("userlistbox").innerHTML = ul;
             break;
-          case "video": // Invited to a video call
-            
+          case "video-invite": // Invited to a video call
+            acceptInvite(msg);
             break;
         }
 
@@ -98,6 +132,90 @@
           send();
         }
       }
+    }
+    
+    function setupConnection() {
+      // Create an RTCPeerConnection which knows to use our chosen
+      // STUN server.
+      
+      myPeerConnection = new RTCPeerConnection({
+          "iceServers": [     // Information about ICE servers
+            { "url": "stun:" + stunServer }   // A STUN server
+          ]
+      });
+      
+      // Set up a handler which is called by the RTC layer to send
+      // ICE candidates to the callee.
+      
+      myPeerConnection.onicecandidate = function(iceEvent) {
+        if (iceEvent.candidate) {
+          connection.send(
+            JSON.stringify({
+              type: "new-ice-candidate",
+              candidate: ice_event.candidate
+            });
+          );
+        }
+      };
+    }
+    
+    // Accept an invitation to video chat.
+    
+    function acceptInvite(msg) {
+      setupConnection();
+    }
+    
+    // Invite the clicked user to video chat. Receives a "click" event.
+    
+    function invite(evt) {
+      console.log("Inviting user " + evt.target.textContent);
+      
+      setupConnection();
+      
+      // Set up a handler which is called when a stream starts coming in
+      // from the callee.
+      
+      myPeerConnection.onaddstream = event => connectStream(event.stream, 
+                              document.getElementById("received_video"));
+      
+      // Start the process of connecting by requesting access to a
+      // stream of video from the local user's camera. We provide a
+      // callback which accepts the stream and attaches it to the
+      // local <video> self view.
+      
+      navigator.getUserMedia({
+            "audio": true,      // We want audio from the local microphone
+            "video": false      // ... and we want the video from the webcam too
+          },
+          function(localStream) {
+            connectStream(localStream, document.getelementById("local_video"));
+            myPeerConnection.addStream(localStream);
+          },
+          reportError
+      );
+      
+      // Now send a request to the signaling server asking it to invite
+      // the other user to accept a call.
+      
+      connection.send(
+        JSON.stringify({
+          type: "video-invite",
+          user
+        })
+      );
+    }
+    
+    // Connect a stream to a <video> element.
+    
+    function connectStream(stream, el) {
+      el.srcObject = stream;
+      el.play();
+    }
+    
+    // Report errors
+    
+    function reportError(errMessage) {
+      console.log(errMessage);
     }
   </script>
 </head>
