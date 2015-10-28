@@ -64,6 +64,20 @@ function isUsernameUnique(name) {
   return isUnique;
 }
 
+// Sends a message (which is already stringified JSON) to a single
+// user, given their username.
+function sendToOneUser(target, msgString) {
+  var isUnique = true;
+  var i;
+
+  for (i=0; i<connectionArray.length; i++) {
+    if (connectionArray[i].username === target) {
+      connectionArray[i].sendUTF(msgString);
+      break;
+    }
+  }
+}
+
 function getConnectionForID(id) {
   var connect = null;
   var i;
@@ -145,7 +159,10 @@ wsServer.on('connect', function(connection) {
           var connect = getConnectionForID(msg.id);
 
           // Take a look at the incoming object and act on it based
-          // on its type.
+          // on its type. Unknown message types are passed through,
+          // since they may be used to implement client-side features.
+          // Messages with a "target" property are sent only to a user
+          // by that name.
 
           switch(msg.type) {
             // Public, textual message
@@ -183,6 +200,11 @@ wsServer.on('connect', function(connection) {
               sendToClients = false;  // We already sent the proper responses
               break;
             
+            /*
+             * I don't think any of this should be needed, because these
+             * messages should pass through and be handled client-side.
+             *
+            
             // Invite a user to join. We add the caller's username as the call
             // ID before sending the message along to the destination
             case "video-invite":
@@ -208,9 +230,11 @@ wsServer.on('connect', function(connection) {
               break;
           }
           
+          */
+          
           // Convert the revised message back to JSON and send it out
-          // to all clients, if doing so is necessary. Note that we
-          // pass through unmolested any messages not specifically handled
+          // to the specified client or all clients, as appropriate. We
+          // pass through any messages not specifically handled
           // in the select block above. This allows the clients to
           // exchange signaling and other control objects unimpeded.
 
@@ -218,8 +242,12 @@ wsServer.on('connect', function(connection) {
             var msgString = JSON.stringify(msg);
             var i;
 
-            for (i=0; i<connectionArray.length; i++) {
-              connectionArray[i].sendUTF(msgString);
+            if (msg.target != undefined && msg.target.length != 0) {
+              sendToOneUser(msg.target, msgString);
+            } else {
+              for (i=0; i<connectionArray.length; i++) {
+                connectionArray[i].sendUTF(msgString);
+              }
             }
           }
       }

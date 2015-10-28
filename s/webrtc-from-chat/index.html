@@ -103,6 +103,36 @@
           case "video-invite": // Invited to a video call
             acceptInvite(msg);
             break;
+        
+          // The other peer has accepted our request to begin a conversation,
+          // so we can now send an official offer.
+        
+          case "video-accept":
+            myPeerConnection.createOffer().then(desc => myPeerConnection.setLocalDescription(desc));
+            break;
+          
+          // Signaling messages
+          
+          // A new ICE candidate has been received from the other peer. Call
+          // RTCPeerConnection.addIceCandidate() to send it along to the
+          // local ICE framework.
+          case "new-ice-candidate":
+            myPeerConnection.addIceCandidate(new RTCIceCandidate(msg.candidate));
+            break;
+          
+          // A new SDP description has arrived, describing a potential
+          // call configuration. Set the remote description by calling
+          // RTCPeerConnection.setRemoveDescription().
+          case "new-description":
+            myPeerConnection.setRemoteDescription(
+                  new RTCSessionDescription(msg.sdp)).then({
+                        switch(myPeerConnection.remoteDescription.type) {
+                          case "answer":
+                            // ADD ANY CODE FOR HANDLING THE ANSWER HERE
+                            break;
+                        }
+                  });
+            break;
         }
 
         if (text.length) {
@@ -134,7 +164,7 @@
       }
     }
     
-    function setupConnection() {
+    function setupConnection(callID) {
       // Create an RTCPeerConnection which knows to use our chosen
       // STUN server.
       
@@ -152,37 +182,25 @@
           connection.send(
             JSON.stringify({
               type: "new-ice-candidate",
-              candidate: ice_event.candidate
+              id: callID,
+              candidate: iceEvent.candidate
             });
           );
         }
       };
-    }
     
-    // Accept an invitation to video chat.
-    
-    function acceptInvite(msg) {
-      setupConnection();
-    }
-    
-    // Invite the clicked user to video chat. Receives a "click" event.
-    
-    function invite(evt) {
-      console.log("Inviting user " + evt.target.textContent);
-      
-      setupConnection();
-      
       // Set up a handler which is called when a stream starts coming in
       // from the callee.
-      
+    
       myPeerConnection.onaddstream = event => connectStream(event.stream, 
                               document.getElementById("received_video"));
-      
+    
       // Start the process of connecting by requesting access to a
       // stream of video from the local user's camera. We provide a
       // callback which accepts the stream and attaches it to the
       // local <video> self view.
-      
+    
+      // *** UPDATE TO USE PROMISE FORM! ***
       navigator.getUserMedia({
             "audio": true,      // We want audio from the local microphone
             "video": false      // ... and we want the video from the webcam too
@@ -193,16 +211,50 @@
           },
           reportError
       );
+    }
+    
+    // Accept an invitation to video chat.
+    
+    function acceptInvite(msg) {
+      callID = msg.user + "~~~" + clientID;
+      setupConnection(callID);
       
-      // Now send a request to the signaling server asking it to invite
-      // the other user to accept a call.
+      // Send the "video-accept" message; this will
+      // tell the other peer to create and send an
+      // offer to exchange streams.
       
       connection.send(
         JSON.stringify({
-          type: "video-invite",
-          user
+          name: clientID,
+          target: msg.user,
+          type: "video-accept",
         })
       );
+    }
+    
+    // Invite the clicked user to video chat. Receives a "click" event.
+    
+    function invite(evt) {
+      if (myPeerConnection != null) {
+        alert("You can't start a call because one is already open!");
+      } else {
+        var target = evt.target.textContent;
+        console.log("Inviting user " + target);
+      
+        callID = clientID + "~~~" + evt.target.textContent;
+        setupConnection(callID);
+      
+        // Now send a request to the signaling server asking it to invite
+        // the other user to accept a call.
+      
+        connection.send(
+          JSON.stringify({
+            name: clientID,
+            type: "video-invite",
+            target: target
+          })
+        );
+      }
     }
     
     // Connect a stream to a <video> element.
