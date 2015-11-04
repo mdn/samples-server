@@ -228,9 +228,8 @@ wsServer.on('connect', function(connection) {
               }
               sendToClients = false;  // Nothing to send
               break;
+            */
           }
-          
-          */
           
           // Convert the revised message back to JSON and send it out
           // to the specified client or all clients, as appropriate. We
@@ -265,14 +264,14 @@ wsServer.on('connect', function(connection) {
     
     // Now find any WebRTC connections the user was connected to and
     // shut them down.
-        
+    /****** PROBABLY NOT NEEDED
     Object.keys(webrtc_chats).forEach(function(callID) {
       Object.keys(webrtc_chats[callID]).forEach(function(connectID) {
         if (connectID == connection.id) {
           delete webrtc_chats[callID][connectID];
         }
       });
-    });
+    });*/
     sendUserListToAll();  // Update the user lists
     console.log((new Date()) + " Peer disconnected.");
   });

@@ -18,6 +18,8 @@
     var stunServer = "stun.l.google.com:19302";   // Use your own!
     
     var callID = null;    // Unique ID for this call
+    var myUsername = null;
+    var targetUsername = null;  // To store username of other peer
     var myPeerConnection = null;    // RTCPeerConnection
 
     // Handle WebRTC prefixes.
@@ -34,8 +36,9 @@
     // this function sends a "username" message to set our username for this
     // session.
     function setUsername() {
+      myUsername = document.getElementById("name").value;
       var msg = {
-        name: document.getElementById("name").value,
+        name: myUsername,
         date: Date.now(),
         id: clientID,
         type: "username"
@@ -74,7 +77,8 @@
             text = "(" + timeStr + ") <b>" + msg.name + "</b>: " + msg.text + "<br>";
             break;
           case "rejectusername":
-            text = "<b>Your username has been set to <em>" + msg.name + "</em> because the name you chose is in use.</b><br>";
+            myUsername = msg.name
+            text = "<b>Your username has been set to <em>" + myUsername + "</em> because the name you chose is in use.</b><br>";
             break;
           case "userlist":
             var ul = "";
@@ -108,6 +112,7 @@
           // so we can now send an official offer.
         
           case "video-accept":
+            console.log("Remote peer has accepted request to negotiate - creating offer");
             myPeerConnection.createOffer().then(desc => myPeerConnection.setLocalDescription(desc));
             break;
           
@@ -117,6 +122,7 @@
           // RTCPeerConnection.addIceCandidate() to send it along to the
           // local ICE framework.
           case "new-ice-candidate":
+            console.log("Received ICE candidate from remote peer");
             myPeerConnection.addIceCandidate(new RTCIceCandidate(msg.candidate));
             break;
           
@@ -124,14 +130,8 @@
           // call configuration. Set the remote description by calling
           // RTCPeerConnection.setRemoveDescription().
           case "new-description":
-            myPeerConnection.setRemoteDescription(
-                  new RTCSessionDescription(msg.sdp)).then({
-                        switch(myPeerConnection.remoteDescription.type) {
-                          case "answer":
-                            // ADD ANY CODE FOR HANDLING THE ANSWER HERE
-                            break;
-                        }
-                  });
+            console.log("Received SDP description from remote peer");
+            myPeerConnection.createAnswer().then(desc => myPeerConnection.setRemoteDescription(desc));
             break;
         }
 
@@ -165,6 +165,8 @@
     }
     
     function setupConnection(callID) {
+      console.log("Setting up a connection for call ID: " + callID);
+      
       // Create an RTCPeerConnection which knows to use our chosen
       // STUN server.
       
@@ -178,13 +180,16 @@
       // ICE candidates to the callee.
       
       myPeerConnection.onicecandidate = function(iceEvent) {
+        console.log("** onicecandidate() **");
         if (iceEvent.candidate) {
+          console.log("Outgoing ICE candidate: " + iceEvent.candidate);
+          
           connection.send(
             JSON.stringify({
               type: "new-ice-candidate",
               id: callID,
               candidate: iceEvent.candidate
-            });
+            })
           );
         }
       };
@@ -192,8 +197,10 @@
       // Set up a handler which is called when a stream starts coming in
       // from the callee.
     
-      myPeerConnection.onaddstream = event => connectStream(event.stream, 
-                              document.getElementById("received_video"));
+      myPeerConnection.onaddstream = function(event) {
+        console.log("** onaddstream **");
+        connectStream(event.stream, document.getElementById("received_video"));
+      };
     
       // Start the process of connecting by requesting access to a
       // stream of video from the local user's camera. We provide a
@@ -203,11 +210,18 @@
       // *** UPDATE TO USE PROMISE FORM! ***
       navigator.getUserMedia({
             "audio": true,      // We want audio from the local microphone
-            "video": false      // ... and we want the video from the webcam too
+            "video": true       // ... and we want the video from the webcam too
           },
           function(localStream) {
-            connectStream(localStream, document.getelementById("local_video"));
-            myPeerConnection.addStream(localStream);
+            console.log("Local video stream obtained");
+            connectStream(localStream, document.getElementById("local_video"));
+            console.log("  -- Calling myPeerConnection.addStream()");
+            try {
+              myPeerConnection.addStream(localStream);
+            } catch(e) {
+              console.error("Exception in addStream(): " + e);
+            }
+            console.log("  -- addStream() returned");
           },
           reportError
       );
@@ -216,17 +230,20 @@
     // Accept an invitation to video chat.
     
     function acceptInvite(msg) {
-      callID = msg.user + "~~~" + clientID;
+      callID = msg.name + "~~~" + myUsername;
+      
+      console.log("Starting to accept invitation for call ID: " + callID);
       setupConnection(callID);
       
       // Send the "video-accept" message; this will
       // tell the other peer to create and send an
       // offer to exchange streams.
       
+      console.log("Sending video-accept to other peer");
       connection.send(
         JSON.stringify({
-          name: clientID,
-          target: msg.user,
+          name: myUsername,
+          target: msg.name,
           type: "video-accept",
         })
       );
@@ -235,23 +252,25 @@
     // Invite the clicked user to video chat. Receives a "click" event.
     
     function invite(evt) {
+      console.log("Starting to prepare an invitation");
       if (myPeerConnection != null) {
         alert("You can't start a call because one is already open!");
       } else {
-        var target = evt.target.textContent;
-        console.log("Inviting user " + target);
-      
-        callID = clientID + "~~~" + evt.target.textContent;
+        targetUsername = evt.target.textContent;
+        console.log("Inviting user " + targetUsername);
+        callID = myUsername + "~~~" + targetUsername;
+        console.log("Setting up connection to invite call ID: " + callID);
         setupConnection(callID);
       
         // Now send a request to the signaling server asking it to invite
         // the other user to accept a call.
       
+        console.log("Sending video-invite to other peer");
         connection.send(
           JSON.stringify({
-            name: clientID,
+            name: myUsername,
             type: "video-invite",
-            target: target
+            target: targetUsername
           })
         );
       }
@@ -260,6 +279,7 @@
     // Connect a stream to a <video> element.
     
     function connectStream(stream, el) {
+      console.log("Connecting video stream");
       el.srcObject = stream;
       el.play();
     }
@@ -267,7 +287,7 @@
     // Report errors
     
     function reportError(errMessage) {
-      console.log(errMessage);
+      console.error("***** Error: " + errMessage);
     }
   </script>
 </head>
