@@ -138,11 +138,11 @@
             // Set up a "negotiationneeded" handler to start the offer process
             // once the local stream is working
             
-            myPeerConnection.onnegotiationneeded = event => {
+            myPeerConnection.onnegotiationneeded = function(event) {
               console.log("*** negotiationneeded ***");
               myPeerConnection.createOffer().then(offer => {
                 console.log("Creating new description object to send to remote peer");
-                myPeerConnection.setLocalDescription(offer);
+                return myPeerConnection.setLocalDescription(offer);
               })
               .then(function() {
                 console.log("---> Sending description to remote peer");
@@ -166,8 +166,9 @@
           // RTCPeerConnection.addIceCandidate() to send it along to the
           // local ICE framework.
           case "new-ice-candidate":
-            console.log("Received ICE candidate from remote peer");
-            myPeerConnection.addIceCandidate(new RTCIceCandidate(msg.candidate));
+            console.log("Received ICE candidate from remote peer: " + msg.candidate);
+            myPeerConnection.addIceCandidate(new RTCIceCandidate(msg.candidate))
+              .catch(reportError);
             break;
           
           // A new SDP description has arrived, describing a potential
@@ -209,7 +210,7 @@
                         .catch(reportError);
               }
             } else {
-              console.log("Not an SDP payload");
+              console.log("No SDP available - treat as an ICE candidate");
               myPeerConnection.addIceCandidate(new RTCIceCandidate(msg.candidate))
                       .catch(reportError);
             }
@@ -252,7 +253,7 @@
       }
     }
     
-    function setupConnection(callID, callSide) {
+    function setupConnection(callID) {
       console.log("Setting up a connection for call ID: " + callID);
       
       // Create an RTCPeerConnection which knows to use our chosen
@@ -304,7 +305,21 @@
       targetUsername = msg.name;
       
       console.log("Starting to accept invitation for call ID: " + callID);
-      setupConnection(callID, CALL_RECEIVER);
+      setupConnection(callID);
+
+      
+      // Send the "video-accept" message; this will
+      // tell the other peer to create and send an
+      // offer to exchange streams.
+      
+      console.log("Sending video-accept to other peer");
+      connection.send(
+        JSON.stringify({
+          name: myUsername,
+          target: targetUsername,
+          type: "video-accept",
+        })
+      );
     }
     
     // Invite the clicked user to video chat. Receives a "click" event.
