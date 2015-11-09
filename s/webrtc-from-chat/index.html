@@ -17,6 +17,24 @@
     
     var stunServer = "stun.l.google.com:19302";   // Use your own!
     
+    // The media constraints object describes what sort of stream we want
+    // to request from the local A/V hardware (typically a webcam and
+    // microphone). Here, we specify only that we want both audio and
+    // video; however, you can be more specific. It's possible to state
+    // that you would prefer (or require) specific resolutions of video,
+    // whether to prefer the user-facing or rear-facing camera (if available),
+    // and so on.
+    //
+    // See also:
+    // https://developer.mozilla.org/en-US/docs/Web/API/MediaStreamConstraints
+    // https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
+    // 
+    
+    var mediaConstraints = {
+      audio: true,            // We want an audio track
+      video: true             // ...and we want a video track
+    };
+    
     var callID = null;    // Unique ID for this call
     var myUsername = null;
     var targetUsername = null;  // To store username of other peer
@@ -177,22 +195,35 @@
           case "new-description": {
             console.log("Received SDP description from remote peer");
             
-            if (msg.sdp) { // ***** THIS SHOULD BE UNNECESSARY - CHECK ONCE ALL WORKS
+            if (msg.sdp) { // ***** THIS IF (not the contents) SHOULD BE UNNECESSARY - CHECK ONCE ALL WORKS
               var desc = new RTCSessionDescription(msg.sdp);
             
               console.log("--> SDP payload found of type: " + desc.type);
               if (desc.type == "offer") {
                 console.log("----> It's an OFFER");
+                // Received an offer from the caller. We need to set the remote description
+                // to this SDP payload so that our local WebRTC layer knows how to talk to
+                // the caller.
                 myPeerConnection.setRemoteDescription(desc).then(function () {
                   console.log("------> Creating answer");
+                  // Now that we've successfully set the remote description, we need to
+                  // create an SDP answer; this SDP data describes the local end of our
+                  // call, including the codec information, options agreed upon, and so
+                  // forth.
                   return myPeerConnection.createAnswer();
                 })
                 .then(function(answer) {
                   console.log("------> Setting local description after creating answer");
+                  // We now have our answer, so establish that as the local description.
+                  // This actually configures our end of the call to match the settings
+                  // specified in the SDP.
                   return myPeerConnection.setLocalDescription(answer);
                 })
                 .then(function() {
                   console.log("Sending new-description packet back to other peer");
+                  // We've configured our end of the call now. Time to send our
+                  // answer back to the caller so they know we're set up. That
+                  // should complete the process of starting up the call!
                   connection.send(
                     JSON.stringify({
                       name: myUsername,
@@ -206,21 +237,11 @@
                 .catch(reportError);
               } else if (desc.type == "answer") {
                 console.log("----> It's an ANSWER");
-                myPeerConnection.setRemoteDescription(desc)/*.then(function() { <<-- was setLocalDescription before commenting out for test
-                  console.log("------> Sharing that we've selected that description");
-                  connection.send(
-                    JSON.stringify({
-                      name: myUsername,
-                      target: targetUsername,
-                      id: callID,
-                      type: "new-description",
-                      sdp: myPeerConnection.localDescription
-                    })
-                  );
-                })*/;
+                // We've received an answer which has the details we need in
+                // order to exchange media with the other end, so configure
+                // ourselves to match. Now we're talking to the callee!
+                myPeerConnection.setRemoteDescription(desc);
               } else {
-//                myPeerConnection.setRemoteDescription(desc)
-//                        .catch(reportError);
                 console.log("*** Unknown SDP payload type");
               }
             } else {  // THIS ELSE SHOULD BE UNNEEDED - CHECK ONCE ALL WORKS
@@ -231,7 +252,7 @@
             break;
           }
           
-          // Unknown message - log in
+          // Unknown message; output to console for debugging.
           
           default:
             console.error("Unknown message received:");
@@ -245,7 +266,8 @@
       };
     }
 
-    // Send a text message to the chat room.
+    // Handles a click on the Send button (or pressing return/enter) by
+    // building a "message" object and sending it to the server.
     function send() {
       var msg = {
         text: document.getElementById("text").value,
@@ -258,7 +280,8 @@
     }
 
     // Handler for keyboard events. This is used to intercept the return and
-    // enter keys and use them to send the message to the server.
+    // enter keys so that we can call send() to transmit the entered text
+    // to the server.
     function handleKey(evt) {
       if (evt.keyCode === 13 || evt.keyCode === 14) {
         if (!document.getElementById("send").disabled) {
@@ -294,10 +317,7 @@
     
       // *** UPDATE TO USE PROMISE FORM! ***
 
-      navigator.getUserMedia({
-            "audio": true,      // We want audio from the local microphone
-            "video": true       // ... and we want the video from the webcam too
-          },
+      navigator.getUserMedia(mediaConstraints,
           function(localStream) {
             console.log("Local video stream obtained");
             connectStream(localStream, document.getElementById("local_video"));
@@ -311,20 +331,35 @@
           reportError
       );
     }
+
+    // Connect a stream to the specified <video> element and start it
+    // running.
     
-    // Accept an invitation to video chat.
+    function connectStream(stream, el) {
+      console.log("Connecting video stream");
+      el.srcObject = stream;
+      el.play();
+    }
+    
+    // Accept an invitation to video chat. We configure our local settings,
+    // start up our media stream, and then send a message to the caller
+    // saying that we're ready to begin negotiating the media format for
+    // communication.
     
     function acceptInvite(msg) {
       callID = msg.name + "~~~" + myUsername;
       targetUsername = msg.name;
       
+      // Call setupConnection() to create the RTCPeerConnection and to
+      // use getUserMedia() to obtain our local stream so that we're ready
+      // to share when the negotiations are complete.
+      
       console.log("Starting to accept invitation for call ID: " + callID);
       setupConnection(callID);
-
       
-      // Send the "video-accept" message; this will
-      // tell the other peer to create and send an
-      // offer to exchange streams.
+      // Send the "video-accept" message. This tells the caller that we
+      // are ready to negotiate the media format through an ICE exchange of
+      // SDP.
       
       console.log("Sending video-accept to other peer");
       connection.send(
@@ -336,21 +371,29 @@
       );
     }
     
-    // Invite the clicked user to video chat. Receives a "click" event.
+    // Handle a click on an item in the user list by inviting the clicked
+    // user to video chat.
     
     function invite(evt) {
       console.log("Starting to prepare an invitation");
       if (myPeerConnection !== null) {
-        alert("You can't start a call because one is already open!");
+        alert("You can't start a call because you already have one open!");
       } else {
         targetUsername = evt.target.textContent;
         console.log("Inviting user " + targetUsername);
         callID = myUsername + "~~~" + targetUsername;
+        
+      // Call setupConnection() to create the RTCPeerConnection and to
+      // use getUserMedia() to obtain our local stream so that we're ready
+      // to share when the negotiations are complete.
+        
         console.log("Setting up connection to invite call ID: " + callID);
         setupConnection(callID);
       
         // Now send a request to the signaling server asking it to invite
-        // the other user to accept a call.
+        // the other user to accept a call. We aren't actually starting
+        // WebRTC negotiations yet; we're just letting the callee know
+        // that we would like to do so.
       
         console.log("Sending video-invite to other peer");
         connection.send(
@@ -363,15 +406,9 @@
       }
     }
     
-    // Connect a stream to a <video> element.
-    
-    function connectStream(stream, el) {
-      console.log("Connecting video stream");
-      el.srcObject = stream;
-      el.play();
-    }
-    
-    // Report errors
+    // Handles reporting errors. Currently, we just dump stuff to console but
+    // in a real-world application, an appropriate (and user-friendly)
+    // error message should be displayed.
     
     function reportError(errMessage) {
       console.error("***** Error " + errMessage.name + ": " + errMessage.message);
