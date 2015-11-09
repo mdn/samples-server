@@ -166,7 +166,7 @@
           // RTCPeerConnection.addIceCandidate() to send it along to the
           // local ICE framework.
           case "new-ice-candidate":
-            console.log("Received ICE candidate from remote peer: " + msg.candidate);
+            console.log("Received ICE candidate from remote peer: " + JSON.stringify(msg.candidate));
             myPeerConnection.addIceCandidate(new RTCIceCandidate(msg.candidate))
               .catch(reportError);
             break;
@@ -177,7 +177,7 @@
           case "new-description": {
             console.log("Received SDP description from remote peer");
             
-            if (msg.sdp) {
+            if (msg.sdp) { // ***** THIS SHOULD BE UNNECESSARY - CHECK ONCE ALL WORKS
               var desc = new RTCSessionDescription(msg.sdp);
             
               console.log("--> SDP payload found of type: " + desc.type);
@@ -188,7 +188,7 @@
                   return myPeerConnection.createAnswer();
                 })
                 .then(function(answer) {
-                  console.log("------> Setting local description (got answer)");
+                  console.log("------> Setting local description after creating answer");
                   return myPeerConnection.setLocalDescription(answer);
                 })
                 .then(function() {
@@ -204,12 +204,26 @@
                   );
                 })
                 .catch(reportError);
+              } else if (desc.type == "answer") {
+                console.log("----> It's an ANSWER");
+                myPeerConnection.setRemoteDescription(desc)/*.then(function() { <<-- was setLocalDescription before commenting out for test
+                  console.log("------> Sharing that we've selected that description");
+                  connection.send(
+                    JSON.stringify({
+                      name: myUsername,
+                      target: targetUsername,
+                      id: callID,
+                      type: "new-description",
+                      sdp: myPeerConnection.localDescription
+                    })
+                  );
+                })*/;
               } else {
-                console.log("----> Not an offer");
-                myPeerConnection.setRemoteDescription(desc)
-                        .catch(reportError);
+//                myPeerConnection.setRemoteDescription(desc)
+//                        .catch(reportError);
+                console.log("*** Unknown SDP payload type");
               }
-            } else {
+            } else {  // THIS ELSE SHOULD BE UNNEEDED - CHECK ONCE ALL WORKS
               console.log("No SDP available - treat as an ICE candidate");
               myPeerConnection.addIceCandidate(new RTCIceCandidate(msg.candidate))
                       .catch(reportError);
