@@ -35,7 +35,6 @@
       video: true             // ...and we want a video track
     };
     
-    var callID = null;    // Unique ID for this call
     var myUsername = null;
     var targetUsername = null;  // To store username of other peer
     var myPeerConnection = null;    // RTCPeerConnection
@@ -136,7 +135,6 @@
             // Set up an |icecandidate| event handler which will forward
             // candiates created by our local ICE layer to the remote peer.
             
-            console.log("Setting icecandidate event handler");
             myPeerConnection.onicecandidate = event => {
               console.log("*** icecandidate ***");
               if (event.candidate) {
@@ -146,7 +144,6 @@
                   JSON.stringify({
                     type: "new-ice-candidate",
                     target: targetUsername,
-                    id: callID,
                     candidate: event.candidate
                   })
                 );
@@ -168,7 +165,6 @@
                   JSON.stringify({
                     name: myUsername,
                     target: targetUsername,
-                    id: callID,
                     type: "new-description",
                     sdp: myPeerConnection.localDescription
                   })
@@ -228,7 +224,6 @@
                     JSON.stringify({
                       name: myUsername,
                       target: targetUsername,
-                      id: callID,
                       type: "new-description",
                       sdp: myPeerConnection.localDescription
                     })
@@ -290,8 +285,8 @@
       }
     }
     
-    function setupConnection(callID) {
-      console.log("Setting up a connection for call ID: " + callID);
+    function setupConnection() {
+      console.log("Setting up a connection...");
       
       // Create an RTCPeerConnection which knows to use our chosen
       // STUN server.
@@ -347,15 +342,14 @@
     // communication.
     
     function acceptInvite(msg) {
-      callID = msg.name + "~~~" + myUsername;
       targetUsername = msg.name;
       
       // Call setupConnection() to create the RTCPeerConnection and to
       // use getUserMedia() to obtain our local stream so that we're ready
       // to share when the negotiations are complete.
       
-      console.log("Starting to accept invitation for call ID: " + callID);
-      setupConnection(callID);
+      console.log("Starting to accept invitation from " + targetUsername);
+      setupConnection();
       
       // Send the "video-accept" message. This tells the caller that we
       // are ready to negotiate the media format through an ICE exchange of
@@ -381,14 +375,13 @@
       } else {
         targetUsername = evt.target.textContent;
         console.log("Inviting user " + targetUsername);
-        callID = myUsername + "~~~" + targetUsername;
         
       // Call setupConnection() to create the RTCPeerConnection and to
       // use getUserMedia() to obtain our local stream so that we're ready
       // to share when the negotiations are complete.
         
-        console.log("Setting up connection to invite call ID: " + callID);
-        setupConnection(callID);
+        console.log("Setting up connection to invite user: " + targetUsername);
+        setupConnection();
       
         // Now send a request to the signaling server asking it to invite
         // the other user to accept a call. We aren't actually starting

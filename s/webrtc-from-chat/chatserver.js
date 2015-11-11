@@ -199,36 +199,6 @@ wsServer.on('connect', function(connection) {
               sendUserListToAll();
               sendToClients = false;  // We already sent the proper responses
               break;
-            
-            /*
-             * I don't think any of this should be needed, because these
-             * messages should pass through and be handled client-side.
-             *
-            
-            // Invite a user to join. We add the caller's username as the call
-            // ID before sending the message along to the destination
-            case "video-invite":
-              msg.callID = connect.username;
-              // *** send only to the user specified by msg.callee ***
-              break;
-              
-            // Join (or create) a video call channel, identified by a callID
-            // which is created by the channel creator and sent to the
-            // callee.
-            case "video-join":
-              if (msg.callID !== undefined) {
-                if (webrtc_chats[msg.callID] === undefined) { // New channel?
-                  webrtc_chats[msg.callID] = {};
-                }
-                
-                // Whether it's new or not, we now record that this call
-                // is associated with this user's ID.
-                
-                webrtc_chats[msg.callID][connect.id] = true;
-              }
-              sendToClients = false;  // Nothing to send
-              break;
-            */
           }
           
           // Convert the revised message back to JSON and send it out
@@ -262,16 +232,6 @@ wsServer.on('connect', function(connection) {
       return el.connected;
     });
     
-    // Now find any WebRTC connections the user was connected to and
-    // shut them down.
-    /****** PROBABLY NOT NEEDED
-    Object.keys(webrtc_chats).forEach(function(callID) {
-      Object.keys(webrtc_chats[callID]).forEach(function(connectID) {
-        if (connectID == connection.id) {
-          delete webrtc_chats[callID][connectID];
-        }
-      });
-    });*/
     sendUserListToAll();  // Update the user lists
     console.log((new Date()) + " Peer disconnected.");
   });
