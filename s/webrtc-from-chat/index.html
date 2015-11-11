@@ -390,7 +390,16 @@
       if (myPeerConnection !== null) {
         alert("You can't start a call because you already have one open!");
       } else {
-        targetUsername = evt.target.textContent;
+        var clickedUsername = evt.target.textContent;
+        
+        // Don't allow users to call themselves, because weird.
+        
+        if (clickedUsername === myUsername) {
+          alert("I'm afraid I can't let you talk to yourself. That would be weird.");
+          return;
+        }
+        
+        targetUsername = clickedUsername;
         console.log("Inviting user " + targetUsername);
         
       // Call setupConnection() to create the RTCPeerConnection and to
