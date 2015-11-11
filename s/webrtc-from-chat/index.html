@@ -306,25 +306,42 @@
       };
                     
       // Start the process of connecting by requesting access to a
-      // stream of video from the local user's camera. We provide a
-      // callback which accepts the stream and attaches it to the
-      // local <video> self view.
+      // stream of audio and video from the local user's camera. This
+      // returns a promise which when fulfilled provides the stream. At
+      // that time, we attach the stream to the local stream's <video>
+      // element, then add it to the RTCPeerConnection.
     
-      // *** UPDATE TO USE PROMISE FORM! ***
-
-      navigator.getUserMedia(mediaConstraints,
-          function(localStream) {
-            console.log("Local video stream obtained");
-            connectStream(localStream, document.getElementById("local_video"));
-            console.log("  -- Calling myPeerConnection.addStream()");
-            try {
-              myPeerConnection.addStream(localStream);
-            } catch(e) {
-              console.error("Exception in addStream(): " + e);
-            }
-          },
-          reportError
-      );
+      navigator.mediaDevices.getUserMedia(mediaConstraints)
+      .then(function(localStream) {
+        console.log("Local video stream obtained");
+        connectStream(localStream, document.getElementById("local_video"));
+        console.log("  -- Calling myPeerConnection.addStream()");
+        try {
+          myPeerConnection.addStream(localStream);
+        } catch(e) {
+          console.error("Exception in addStream(): " + e);
+        }
+      })
+      .catch(function(e) {
+        // For some reason, getUserMedia has reported failure. The two most
+        // likely scenarios are that the user has no camera and/or microphone
+        // or that they declined to share their equipment when prompted. If
+        // they simply opted not to share their media, that's not really an
+        // error, so we won't present a message in that situation.
+      
+        switch(e.code) {
+          case NotFoundError:
+            alert("Unable to open your call because no camera and/or microphone" +
+                  "were found.");
+            break;
+          case PermissionDeniedError:
+            // Do nothing; this is the same as the user canceling the call.
+            break;
+          default:
+            alert("Error opening your camera and/or microphone: " + e.name);
+            break;
+        }
+      });
     }
 
     // Connect a stream to the specified <video> element and start it
