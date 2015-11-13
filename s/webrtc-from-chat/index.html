@@ -191,58 +191,52 @@
           case "new-description": {
             console.log("Received SDP description from remote peer");
             
-            if (msg.sdp) { // ***** THIS IF (not the contents) SHOULD BE UNNECESSARY - CHECK ONCE ALL WORKS
-              var desc = new RTCSessionDescription(msg.sdp);
-            
-              console.log("--> SDP payload found of type: " + desc.type);
-              if (desc.type == "offer") {
-                console.log("----> It's an OFFER");
-                // Received an offer from the caller. We need to set the remote description
-                // to this SDP payload so that our local WebRTC layer knows how to talk to
-                // the caller.
-                myPeerConnection.setRemoteDescription(desc).then(function () {
-                  console.log("------> Creating answer");
-                  // Now that we've successfully set the remote description, we need to
-                  // create an SDP answer; this SDP data describes the local end of our
-                  // call, including the codec information, options agreed upon, and so
-                  // forth.
-                  return myPeerConnection.createAnswer();
-                })
-                .then(function(answer) {
-                  console.log("------> Setting local description after creating answer");
-                  // We now have our answer, so establish that as the local description.
-                  // This actually configures our end of the call to match the settings
-                  // specified in the SDP.
-                  return myPeerConnection.setLocalDescription(answer);
-                })
-                .then(function() {
-                  console.log("Sending new-description packet back to other peer");
-                  // We've configured our end of the call now. Time to send our
-                  // answer back to the caller so they know we're set up. That
-                  // should complete the process of starting up the call!
-                  connection.send(
-                    JSON.stringify({
-                      name: myUsername,
-                      target: targetUsername,
-                      type: "new-description",
-                      sdp: myPeerConnection.localDescription
-                    })
-                  );
-                })
-                .catch(reportError);
-              } else if (desc.type == "answer") {
-                console.log("----> It's an ANSWER");
-                // We've received an answer which has the details we need in
-                // order to exchange media with the other end, so configure
-                // ourselves to match. Now we're talking to the callee!
-                myPeerConnection.setRemoteDescription(desc);
-              } else {
-                console.log("*** Unknown SDP payload type");
-              }
-            } else {  // THIS ELSE SHOULD BE UNNEEDED - CHECK ONCE ALL WORKS
-              console.log("No SDP available - treat as an ICE candidate");
-              myPeerConnection.addIceCandidate(new RTCIceCandidate(msg.candidate))
-                      .catch(reportError);
+            var desc = new RTCSessionDescription(msg.sdp);
+          
+            console.log("--> SDP payload found of type: " + desc.type);
+            if (desc.type == "offer") {
+              console.log("----> It's an OFFER");
+              // Received an offer from the caller. We need to set the remote description
+              // to this SDP payload so that our local WebRTC layer knows how to talk to
+              // the caller.
+              myPeerConnection.setRemoteDescription(desc).then(function () {
+                console.log("------> Creating answer");
+                // Now that we've successfully set the remote description, we need to
+                // create an SDP answer; this SDP data describes the local end of our
+                // call, including the codec information, options agreed upon, and so
+                // forth.
+                return myPeerConnection.createAnswer();
+              })
+              .then(function(answer) {
+                console.log("------> Setting local description after creating answer");
+                // We now have our answer, so establish that as the local description.
+                // This actually configures our end of the call to match the settings
+                // specified in the SDP.
+                return myPeerConnection.setLocalDescription(answer);
+              })
+              .then(function() {
+                console.log("Sending new-description packet back to other peer");
+                // We've configured our end of the call now. Time to send our
+                // answer back to the caller so they know we're set up. That
+                // should complete the process of starting up the call!
+                connection.send(
+                  JSON.stringify({
+                    name: myUsername,
+                    target: targetUsername,
+                    type: "new-description",
+                    sdp: myPeerConnection.localDescription
+                  })
+                );
+              })
+              .catch(reportError);
+            } else if (desc.type == "answer") {
+              console.log("----> It's an ANSWER");
+              // We've received an answer which has the details we need in
+              // order to exchange media with the other end, so configure
+              // ourselves to match. Now we're talking to the callee!
+              myPeerConnection.setRemoteDescription(desc);
+            } else {
+              console.log("*** Unknown SDP payload type");
             }
             break;
           }
