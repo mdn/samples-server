@@ -1,0 +1,21 @@
+{
+  "name": "extract-function",
+  "version": "0.1.0",
+  "description": "Extracts and returns the source code for a named function from a JS script at a given URL.",
+  "main": "extract-function.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "mdn",
+    "tool",
+    "javascript",
+    "function"
+  ],
+  "author": "Mozilla",
+  "license": "MPL-2.0",
+  "dependencies": {
+    "express": "^4.12.4",
+    "function-extractor": "0.0.5"
+  }
+}

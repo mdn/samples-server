@@ -1,0 +1,8 @@
+{
+  "name": "webrtc-from-chat",
+  "version": "1.0.0",
+  "description": "A simple WebSocket-based chat server with two-way video chat support added",
+  "dependencies": {
+    "websocket": "*"
+  }
+}

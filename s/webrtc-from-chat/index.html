@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+<head>
+  <title>WebSocket Chat Demo with WebRTC Calling</title>
+  <meta charset="utf-8">
+  <link href="chat.css" rel="stylesheet">
+  <script type="text/javascript" src="chatclient.js"></script>
+</head>
+<body>
+  <p>This is a simple chat system implemented using WebSockets. It works by
+  sending packets of JSON back and forth with the server. Click a username
+  in the user list to ask them to enter a one-on-one video chat with you.
+  <a href="https://github.com/mdn/samples-server/tree/master/s/webrtc-from-chat">
+  Check out the source</a> on Github.</p>
+  <p>Enter a username: <input id="name" type="text" maxlength="12" placeholder="Your name">
+  <input type="button" name="login" value="Log in" onclick="connect()"></p>
+  
+  <div id="container" class="flexChild columnParent">
+    <div class="flexChild rowParent">
+      <div class="flexChild rowParent">
+        <div class="flexChild" id="userlist-container">
+          <ul id="userlistbox"></ul>
+        </div>
+        <div class="flexChild" id="chat-container">
+          <iframe id="chatbox" srcdoc="<body><p>Welcome!</p></body>"></iframe>
+        </div>
+      </div>
+
+      <div class="flexChild" id="camera-container">
+        <div class="camera-box">
+          <video id="received_video" autoplay></video>
+          <video id="local_video" autoplay></video>
+          <button id="video-close" onclick="closeVideoCall(true);" disabled>Hang Up</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="flexChild rowParent" id="control-row">
+      <div class="flexChild" id="empty-container"></div>
+      <div class="flexChild" id="chat-controls-container">
+        Chat: <input id="text" type="text" name="text" size="80" maxlength="256" placeholder="Chat with us!" autocomplete="off"onkeyup="handleKey(event)" disabled>
+        <input type="button" id="send" name="send" value="Send" onclick=handleSendButton disabled>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
