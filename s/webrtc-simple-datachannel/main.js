@@ -72,23 +72,6 @@
     .catch(handleCreateDescriptionError);
   }
     
-  // Callback executed when the createAnswer() request for
-  // the remote connection finishes up.
-  
-  function gotRemoteDescription(theDescription) {
-    remoteConnection.setLocalDescription(theDescription);
-    localConnection.setRemoteDescription(theDescription);
-  }
-  
-  // Handle ICE callback for the remote connection.
-  
-  function remoteICECallback(event) {
-    if (event.candidate) {
-      localConnection.addIceCandidate(event.candidate,
-              handleLocalAddCandidateSuccess, handleRemoteAddCandidateError);
-    }
-  }
-  
   // Handle errors attempting to create a description;
   // this can happen both when creating an offer and when
   // creating an answer. In this simple example, we handle
@@ -132,13 +115,15 @@
     messageInputBox.focus();
   }
   
-  // Handle status changes on the send channel.
+  // Handle status changes on the local end of the data
+  // channel; this is the end doing the sending of data
+  // in this example.
   
-  function handleSendChannelStatusChange() {
+  function handleSendChannelStatusChange(event) {
     if (sendChannel) {
       var state = sendChannel.readyState;
     
-      if (sendChannel.readyState === "open") {
+      if (state === "open") {
         messageInputBox.disabled = false;
         messageInputBox.focus();
         sendButton.disabled = false;
@@ -153,7 +138,8 @@
     }
   }
   
-  // Handle events that occur on the receiver's channel.
+  // Called when the connection opens and the data
+  // channel is ready to be connected to the remote.
   
   function receiveChannelCallback(event) {
     receiveChannel = event.channel;
@@ -175,7 +161,7 @@
   
   // Handle status changes on the receiver's channel.
   
-  function handleReceiveChannelStatusChange() {
+  function handleReceiveChannelStatusChange(event) {
     if (receiveChannel) {
       console.log("Receive channel's status has changed to " +
                   receiveChannel.readyState);
