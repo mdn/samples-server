@@ -405,16 +405,32 @@ function setupVideoCall(signalMessage) {
 function closeVideoCall(sendCloseMessage) {
   var remoteVideo = document.getElementById("received_video");
   var localVideo = document.getElementById("local_video");
-  
-  // Stop the videos
-  
-  remoteVideo.src = null;
-  localVideo.src = null;
+
+  console.log("Closing the call");
   
   // Close the RTCPeerConnection
   
-  console.log("Closing the call");
   if (myPeerConnection) {
+    console.log("--> Closing the peer connection");
+
+    // Disconnect all our event listeners; we don't want stray events
+    // to interfere with the hangup while it's ongoing.
+    
+    myPeerConnection.onaddstream = null;
+    myPeerConnection.onremovestream = null;
+    myPeerConnection.onnicecandidate = null;
+    myPeerConnection.oniceconnectionstate = null;
+    myPeerConnection.onsignalingstatechange = null;
+    
+    // Stop the videos
+    
+    remoteVideo.srcObject.getTracks().forEach(track => track.stop());
+    localVideo.srcObject.getTracks().forEach(track => track.stop())
+    remoteVideo.src = null;
+    localVideo.src = null;
+    
+    // Close the call
+    
     myPeerConnection.close();
     myPeerConnection = null;
   }
@@ -426,6 +442,7 @@ function closeVideoCall(sendCloseMessage) {
   // If sendCloseMessage is true, ask the other end to hang up too.
   
   if (sendCloseMessage) {
+    console.log("--> Asking the other end to close too");
     connection.send(
       JSON.stringify({
         name: myUsername,
