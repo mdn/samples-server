@@ -32,7 +32,6 @@ var mediaConstraints = {
 var myUsername = null;
 var targetUsername = null;  // To store username of other peer
 var myPeerConnection = null;    // RTCPeerConnection
-var gotUserMedia = null;    // The promise returned by getUserMedia()
 
 // Handle WebRTC prefixes.
 
@@ -124,12 +123,12 @@ function connect() {
       // so we can now send an official offer.
     
       case "video-accept":
-        console.log("Call recipient has accepted request to negotiate - creating offer");
+        console.log("Call recipient has accepted request to negotiate");
         
         // Set up an |icecandidate| event handler which will forward
         // candiates created by our local ICE layer to the remote peer.
         
-        myPeerConnection.onicecandidate = event => {
+        myPeerConnection.onicecandidate = function(event) {
           console.log("*** icecandidate ***");
           if (event.candidate) {
             console.log("Outgoing ICE candidate: " + event.candidate.candidate);
@@ -144,28 +143,28 @@ function connect() {
           }
         };
         
-        // Set up a "negotiationneeded" handler to start the offer process
-        // once the local stream is working
+        // Create an offer, set it as the description of our local media
+        // (which configures our local media stream), then send the
+        // description to the callee as an offer. This is a proposed media
+        // format, codec, resolution, etc.
         
-        myPeerConnection.onnegotiationneeded = function(event) {
-          console.log("*** negotiationneeded ***");
-          myPeerConnection.createOffer().then(offer => {
-            console.log("Creating new description object to send to remote peer");
-            return myPeerConnection.setLocalDescription(offer);
-          })
-          .then(function() {
-            console.log("---> Sending description to remote peer");
-            connection.send(
-              JSON.stringify({
-                name: myUsername,
-                target: targetUsername,
-                type: "new-description",
-                sdp: myPeerConnection.localDescription
-              })
-            );
-          })
-          .catch(reportError);
-        };
+        console.log("---> Creating offer");
+        myPeerConnection.createOffer().then(offer => {
+          console.log("---> Creating new description object to send to remote peer");
+          return myPeerConnection.setLocalDescription(offer);
+        })
+        .then(function() {
+          console.log("---> Sending description to remote peer");
+          connection.send(
+            JSON.stringify({
+              name: myUsername,
+              target: targetUsername,
+              type: "new-description",
+              sdp: myPeerConnection.localDescription
+            })
+          );
+        })
+        .catch(reportError);
         break;
       
       // Signaling messages
@@ -188,7 +187,7 @@ function connect() {
         var desc = new RTCSessionDescription(msg.sdp);
       
         console.log("--> SDP payload found of type: " + desc.type);
-        if (desc.type == "offer") {
+        if (desc.type === "offer") {
           console.log("----> It's an OFFER");
           // Received an offer from the caller. We need to set the remote description
           // to this SDP payload so that our local WebRTC layer knows how to talk to
@@ -209,7 +208,7 @@ function connect() {
             return myPeerConnection.setLocalDescription(answer);
           })
           .then(function() {
-            console.log("Sending new-description packet back to other peer");
+            console.log("Sending answer packet back to other peer");
             // We've configured our end of the call now. Time to send our
             // answer back to the caller so they know we're set up. That
             // should complete the process of starting up the call!
@@ -223,17 +222,23 @@ function connect() {
             );
           })
           .catch(reportError);
-        } else if (desc.type == "answer") {
+        } else if (desc.type === "answer") {
           console.log("----> It's an ANSWER");
           // We've received an answer which has the details we need in
           // order to exchange media with the other end, so configure
           // ourselves to match. Now we're talking to the callee!
-          myPeerConnection.setRemoteDescription(desc);
+          myPeerConnection.setRemoteDescription(desc).catch(reportError);
         } else {
           console.log("*** Unknown SDP payload type");
         }
         break;
       }
+      
+      // The other end of the call has closed the call. Close our end, too.
+      
+      case "video-close":
+        closeVideoCall(false);
+        break;
       
       // Unknown message; output to console for debugging.
       
@@ -251,7 +256,7 @@ function connect() {
 
 // Handles a click on the Send button (or pressing return/enter) by
 // building a "message" object and sending it to the server.
-function send() {
+function handleSendButton() {
   var msg = {
     text: document.getElementById("text").value,
     type: "message",
@@ -273,7 +278,14 @@ function handleKey(evt) {
   }
 }
 
-function setupConnection() {
+// Create the RTCPeerConnection which knows how to talk to our
+// selected STUN/TURN server and then uses getUserMedia() to find
+// our camera and microphone and add that stream to the connection for
+// use in our video call. Then, we send the passed-in message object
+// to the signaling server. This object is either an invitation to
+// a call or answering a call.
+
+function setupVideoCall(signalMessage) {
   console.log("Setting up a connection...");
   
   // Create an RTCPeerConnection which knows to use our chosen
@@ -288,11 +300,60 @@ function setupConnection() {
   // Set up a handler which is called when a stream starts coming in
   // from the callee.
         
-  myPeerConnection.onaddstream = event => {
+  myPeerConnection.onaddstream = function(event) {
     console.log("*** addstream ***");
-    connectStream(event.stream, document.getElementById("received_video"));
+    document.getElementById("received_video").srcObject = event.stream;
+    document.getElementById("video-close").disabled = false;
   };
-                
+  
+  // Set up a handler which is called when the remote end of the connection
+  // removes its stream. We consider this the same as hanging up the call.
+  // It could just as well be treated as a "mute".
+  //
+  // Note that currently, the spec is hazy on exactly when this and other
+  // "connection failure" scenarios should occur, so sometimes they simply
+  // don't happen.
+  
+  myPeerConnection.onnremovestream = function(event) {
+    console.log("*** removestream ***");
+    closeVideoCall(true);
+  }
+  
+  // Set up an ICE connection state change event handler. This will detect
+  // when the ICE connection is closed, failed, or disconnected.
+  //
+  // Note that currently, the spec is hazy on exactly when this and other
+  // "connection failure" scenarios should occur, so sometimes they simply
+  // don't happen.
+  
+  myPeerConnection.oniceconnectionstate = function(event) {
+    console.log("*** RECEIVED ICE STATE CHANGE: " + myPeerConnection.iceConnectionState);
+    
+    switch(myPeerConnection.iceConnectionState) {
+      case "closed":
+      case "failed":
+      case "disconnected":
+        closeVideoCall(true);
+        break;
+    }
+  }
+  
+  // Set up a signaling state change event handler. This will detect when
+  // the signaling connection is closed.
+  //
+  // Note that currently, the spec is hazy on exactly when this and other
+  // "connection failure" scenarios should occur, so sometimes they simply
+  // don't happen.
+  
+  myPeerConnection.onsignalingstatechange = function(event) {
+    console.log("*** RECEIVED SIGNALING STATE CHANGE: " + myPeerConnection.signalingState);
+    switch(myPeerConnection.signalingState) {
+      case "closed":
+        closeVideoCall(true);
+        break;
+    }
+  }
+                  
   // Start the process of connecting by requesting access to a
   // stream of audio and video from the local user's camera. This
   // returns a promise which when fulfilled provides the stream. At
@@ -302,13 +363,13 @@ function setupConnection() {
   navigator.mediaDevices.getUserMedia(mediaConstraints)
   .then(function(localStream) {
     console.log("Local video stream obtained");
-    connectStream(localStream, document.getElementById("local_video"));
+    document.getElementById("local_video").srcObject = localStream;
+    
     console.log("  -- Calling myPeerConnection.addStream()");
-    try {
-      myPeerConnection.addStream(localStream);
-    } catch(e) {
-      console.error("Exception in addStream(): " + e);
-    }
+    myPeerConnection.addStream(localStream);
+    
+    console.log("  -- Sending the signaling message now that gUM is done");
+    connection.send(JSON.stringify(signalMessage));
   })
   .catch(function(e) {
     // For some reason, getUserMedia has reported failure. The two most
@@ -316,58 +377,65 @@ function setupConnection() {
     // or that they declined to share their equipment when prompted. If
     // they simply opted not to share their media, that's not really an
     // error, so we won't present a message in that situation.
-  
-    switch(e.code) {
-      case NotFoundError:
+    console.log(e);
+    switch(e.name) {
+      case "NotFoundError":
         alert("Unable to open your call because no camera and/or microphone" +
               "were found.");
         break;
-      case PermissionDeniedError:
+      case "PermissionDeniedError":
         // Do nothing; this is the same as the user canceling the call.
         break;
       default:
-        alert("Error opening your camera and/or microphone: " + e.name);
+        alert("Error opening your camera and/or microphone: " + e.message);
         break;
     }
   });
 }
 
-// Connect a stream to the specified <video> element and start it
-// running.
+// Close the RTCPeerConnection and reset variables so that the user can
+// make or receive another call if they wish. This is called both
+// when the user hangs up, the other user hangs up, or if a connection
+// failure is detected.
+//
+// If sendCloseMessage is true, we also send a "video-close" message to
+// the other peer so they know to hang up their end too. This is needed
+// since WebRTC is hazy on how to detect a terminated call.
 
-function connectStream(stream, el) {
-  console.log("Connecting video stream");
-  el.srcObject = stream;
-  el.play();
-}
+function closeVideoCall(sendCloseMessage) {
+  var remoteVideo = document.getElementById("received_video");
+  var localVideo = document.getElementById("local_video");
+  
+  // Stop the videos
+  
+  remoteVideo.src = null;
+  localVideo.src = null;
+  
+  // Close the RTCPeerConnection
+  
+  console.log("Closing the call");
+  if (myPeerConnection) {
+    myPeerConnection.close();
+    myPeerConnection = null;
+  }
+  
+  // Disable the hangup button
+  
+  document.getElementById("video-close").disabled = true;
+  
+  // If sendCloseMessage is true, ask the other end to hang up too.
+  
+  if (sendCloseMessage) {
+    connection.send(
+      JSON.stringify({
+        name: myUsername,
+        target: targetUsername,
+        type: "video-close"
+      })
+    );
+  }
 
-// Accept an invitation to video chat. We configure our local settings,
-// start up our media stream, and then send a message to the caller
-// saying that we're ready to begin negotiating the media format for
-// communication.
-
-function acceptInvite(msg) {
-  targetUsername = msg.name;
-  
-  // Call setupConnection() to create the RTCPeerConnection and to
-  // use getUserMedia() to obtain our local stream so that we're ready
-  // to share when the negotiations are complete.
-  
-  console.log("Starting to accept invitation from " + targetUsername);
-  setupConnection();
-  
-  // Send the "video-accept" message. This tells the caller that we
-  // are ready to negotiate the media format through an ICE exchange of
-  // SDP.
-  
-  console.log("Sending video-accept to other peer");
-  connection.send(
-    JSON.stringify({
-      name: myUsername,
-      target: targetUsername,
-      type: "video-accept",
-    })
-  );
+  targetUsername = null;
 }
 
 // Handle a click on an item in the user list by inviting the clicked
@@ -390,27 +458,44 @@ function invite(evt) {
     targetUsername = clickedUsername;
     console.log("Inviting user " + targetUsername);
     
-  // Call setupConnection() to create the RTCPeerConnection and to
+  // Call setupVideoCall() to create the RTCPeerConnection and to
   // use getUserMedia() to obtain our local stream so that we're ready
-  // to share when the negotiations are complete.
+  // to share when the negotiations are complete. We provide a
+  // "video-invite" message, which is sent to the callee via the
+  // signaling server once getUserMedia() is fulfilled successfully;
+  // this message invites the callee to start ICE negotiations.
     
     console.log("Setting up connection to invite user: " + targetUsername);
-    setupConnection();
-  
-    // Now send a request to the signaling server asking it to invite
-    // the other user to accept a call. We aren't actually starting
-    // WebRTC negotiations yet; we're just letting the callee know
-    // that we would like to do so.
-  
-    console.log("Sending video-invite to other peer");
-    connection.send(
-      JSON.stringify({
-        name: myUsername,
-        type: "video-invite",
-        target: targetUsername
-      })
-    );
+    setupVideoCall({
+      name: myUsername,
+      type: "video-invite",
+      target: targetUsername
+    });
   }
+}
+
+// Accept an invitation to video chat. We configure our local settings,
+// start up our media stream, and then send a message to the caller
+// saying that we're ready to begin negotiating the media format for
+// communication.
+
+function acceptInvite(msg) {
+  targetUsername = msg.name;
+  
+  // Call setupVideoCall() to create the RTCPeerConnection and to
+  // use getUserMedia() to obtain our local stream so that we're ready
+  // to share when the negotiations are complete. We provide a
+  // "video-accept" message, which is sent to the callee through the
+  // signaling server once getUserMedia() has been successfully
+  // fulfilled; this message tells the caller that we're ready to
+  // negotiate the media format through an ICE exchange.
+  
+  console.log("Starting to accept invitation from " + targetUsername);
+  setupVideoCall({
+    name: myUsername,
+    target: targetUsername,
+    type: "video-accept",
+  });
 }
 
 // Handles reporting errors. Currently, we just dump stuff to console but
