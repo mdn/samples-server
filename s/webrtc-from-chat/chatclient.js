@@ -33,15 +33,6 @@ var myUsername = null;
 var targetUsername = null;  // To store username of other peer
 var myPeerConnection = null;    // RTCPeerConnection
 
-// Handle WebRTC prefixes.
-
-window.RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || 
-                       window.webkitRTCPeerConnection || window.msRTCPeerConnection;
-window.RTCSessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription ||
-                       window.webkitRTCSessionDescription || window.msRTCSessionDescription;
-navigator.getUserMedia = navigator.getUserMedia || navigator.mozGetUserMedia ||
-                       navigator.webkitGetUserMedia || navigator.msGetUserMedia;
-
 // Called when the "id" message is received; this message is sent by the
 // server to assign this login session a unique ID number; in response,
 // this function sends a "username" message to set our username for this
@@ -292,8 +283,9 @@ function setupVideoCall(signalMessage) {
   // STUN server.
   
   myPeerConnection = new RTCPeerConnection({
-      "iceServers": [     // Information about ICE servers
+      iceServers: [     // Information about ICE servers
         { urls: "stun:" + stunServer }   // A STUN server
+//        { urls: "stun:52.5.80.241:3478" }
       ]
   });
 
