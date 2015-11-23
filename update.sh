@@ -41,4 +41,4 @@ systemctl enable httpd.service
 
 # Start spinning up Sample Server stuff here
 
-/bin/python /var/www/html/startup.py &
+/usr/bin/python /var/www/html/startup.py &

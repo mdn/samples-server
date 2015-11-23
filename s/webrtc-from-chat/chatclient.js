@@ -5,8 +5,6 @@
 var connection = null;
 var clientID = 0;
 
-var WebSocket = WebSocket || MozWebSocket;
-
 // WebRTC connection variables.
 
 var stunServer = "stun.l.google.com:19302";   // Use your own!
@@ -33,6 +31,14 @@ var myUsername = null;
 var targetUsername = null;  // To store username of other peer
 var myPeerConnection = null;    // RTCPeerConnection
 
+// Output logging information to console
+
+function log(text) {
+  var time = new Date();
+  
+  console.log("[" + time.toLocaleTimeString() + "] " + text);
+}
+
 // Called when the "id" message is received; this message is sent by the
 // server to assign this login session a unique ID number; in response,
 // this function sends a "username" message to set our username for this
@@ -48,10 +54,22 @@ function setUsername() {
   connection.send(JSON.stringify(msg));
 }
 
+// Send a JavaScript object by converting it to JSON and sending
+// it as a message on the WebSocket connection.
+
+function sendtoServer(msg) {
+  var msgJSON = JSON.stringify(msg);
+  
+  log("Sending '" + msg.type + "' message: " + msg);
+  connection.send(msgJSON);
+}
+
+// Open and configure the connection to the WebSocket server.
+
 function connect() {
   var serverUrl = "ws://" + window.location.hostname + ":6503";
 
-  connection = new WebSocket(serverUrl);
+  connection = new WebSocket(serverUrl, "json");
 
   connection.onopen = function(evt) {
     document.getElementById("text").disabled = false;
@@ -264,7 +282,7 @@ function handleSendButton() {
 function handleKey(evt) {
   if (evt.keyCode === 13 || evt.keyCode === 14) {
     if (!document.getElementById("send").disabled) {
-      send();
+      handleSendButton();
     }
   }
 }
@@ -309,7 +327,7 @@ function setupVideoCall(signalMessage) {
   myPeerConnection.onnremovestream = function(event) {
     console.log("*** removestream ***");
     closeVideoCall(true);
-  }
+  };
   
   // Set up an ICE connection state change event handler. This will detect
   // when the ICE connection is closed, failed, or disconnected.
@@ -328,7 +346,7 @@ function setupVideoCall(signalMessage) {
         closeVideoCall(true);
         break;
     }
-  }
+  };
   
   // Set up a signaling state change event handler. This will detect when
   // the signaling connection is closed.
@@ -344,7 +362,7 @@ function setupVideoCall(signalMessage) {
         closeVideoCall(true);
         break;
     }
-  }
+  };
                   
   // Start the process of connecting by requesting access to a
   // stream of audio and video from the local user's camera. This
@@ -383,7 +401,7 @@ function setupVideoCall(signalMessage) {
         break;
     }
   });
-}
+};
 
 // Close the RTCPeerConnection and reset variables so that the user can
 // make or receive another call if they wish. This is called both
@@ -417,7 +435,7 @@ function closeVideoCall(sendCloseMessage) {
     // Stop the videos
     
     remoteVideo.srcObject.getTracks().forEach(track => track.stop());
-    localVideo.srcObject.getTracks().forEach(track => track.stop())
+    localVideo.srcObject.getTracks().forEach(track => track.stop());
     remoteVideo.src = null;
     localVideo.src = null;
     

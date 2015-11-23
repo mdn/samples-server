@@ -12,13 +12,21 @@
 var http = require('http');
 var url = require('url');
 var fs = require('fs');
-var websocket = require('websocket').server;
+var WebSocketServer = require('websocket').server;
 
 // Used for managing the text chat user list.
 
 var connectionArray = [];
 var nextID = Date.now();
 var appendToMakeUnique = 1;
+
+// Output logging information to console
+
+function log(text) {
+  var time = new Date();
+  
+  console.log("[" + time.toLocaleTimeString() + "] " + text);
+}
 
 // If you want to implement support for blocking specific origins, this is
 // where you do it. Just return false to refuse WebSocket connections given
@@ -114,7 +122,7 @@ function sendUserListToAll() {
 // want to, you can return real HTML here and serve Web content.
 
 var server = http.createServer(function(request, response) {
-    console.log((new Date()) + " Received request for " + request.url);
+    log(" Received request for " + request.url);
     response.writeHead(404);
     response.end();
 });
@@ -123,29 +131,33 @@ var server = http.createServer(function(request, response) {
 // This will be turned into a WebSocket port very shortly.
 
 server.listen(6503, function() {
-    console.log((new Date()) + " Server is listening on port 6503");
+    log("Server is listening on port 6503");
 });
 
 // Create the WebSocket server by converting the HTTP server into one.
 
-var wsServer = new websocket({
+var wsServer = new WebSocketServer({
     httpServer: server,
-    autoAcceptConnections: true // You should use false here!
+    autoAcceptConnections: false
 });
 
 // Set up a "connect" message handler on our WebSocket server. This is
 // called whenever a user connects to the server's port using the
 // WebSocket protocol.
-wsServer.on('connect', function(connection) {
-  if (!originIsAllowed(connection.origin)) {
+wsServer.on('request', function(request) {
+  if (!originIsAllowed(request.origin)) {
     request.reject();
-    console.log((new Date()) + "Connection from " + connection.origin + " rejected.");
+    log("Connection from " + request.origin + " rejected.");
     return;
   }
   
+  // Accept the request and get a connection.
+  
+  var connection = request.accept("json", request.origin);
+  
   // Add the new connection to our list of connections.
   
-  console.log((new Date()) + " Connection accepted.");
+  log("Connection accepted from " + connection.remoteAddress + ".");
   connectionArray.push(connection);
   
   connection.clientID = nextID;
@@ -167,7 +179,7 @@ wsServer.on('connect', function(connection) {
 
   connection.on('message', function(message) {
       if (message.type === 'utf8') {
-          console.log("Received Message: " + message.utf8Data);
+          log("Received Message: " + message.utf8Data);
 
           // Process incoming data.
 
@@ -235,7 +247,7 @@ wsServer.on('connect', function(connection) {
 
             // If the message specifies a target username, only send the
             // message to them. Otherwise, send it to every user.
-            if (msg.target != undefined && msg.target.length != 0) {
+            if (msg.target !== undefined && msg.target.length !== 0) {
               sendToOneUser(msg.target, msgString);
             } else {
               for (i=0; i<connectionArray.length; i++) {
@@ -248,7 +260,7 @@ wsServer.on('connect', function(connection) {
   
   // Handle the WebSocket "close" event; this means a user has logged off
   // or has been disconnected.
-  connection.on('close', function(connection) {
+  connection.on('close', function(reason, description) {
     // First, remove the connection from the list of connections.
     connectionArray = connectionArray.filter(function(el, idx, ar) {
       return el.connected;
@@ -257,6 +269,15 @@ wsServer.on('connect', function(connection) {
     // Now send the updated user list. Again, please don't do this in a
     // real application. Your users won't like you very much.
     sendUserListToAll();
-    console.log((new Date()) + " Peer disconnected.");
+    
+    // Build and output log output for close information.
+    
+    var logMessage = "Connection closed: " + connection.remoteAddress + " (" +
+                     reason;
+    if (description !== null && description.length !== 0) {
+      logMessage += ": " + description;
+    }
+    logMessage += ")";
+    log(logMessage);
   });
 });
