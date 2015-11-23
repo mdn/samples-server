@@ -28,7 +28,7 @@
 /* The video panel */
 .camera-box {
   width: 500px;
-  height: 100%;
+  height: 760px;
   display:block;
   vertical-align:top;
   position:relative;
@@ -71,7 +71,18 @@
   font-size: 14px;
   font-family: "Lucida Grande", "Arial", sans-serif;
   color: rgba(255, 255, 255, 1.0);
-  cursor:pointer;
+  cursor: pointer;
+}
+
+#video-close:hover {
+  filter: brightness(150%);
+  -webkit-filter: brightness(150%);
+}
+
+#video-close:disabled {
+  filter: grayscale(50%);
+  -webkit-filter: grayscale(50%);
+  cursor: default;
 }
 
 /*** Flexbox layout ***/
