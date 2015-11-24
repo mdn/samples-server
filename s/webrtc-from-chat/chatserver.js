@@ -247,7 +247,7 @@ wsServer.on('request', function(request) {
 
             // If the message specifies a target username, only send the
             // message to them. Otherwise, send it to every user.
-            if (msg.target !== undefined && msg.target.length !== 0) {
+            if (msg.target && msg.target !== undefined && msg.target.length !== 0) {
               sendToOneUser(msg.target, msgString);
             } else {
               for (i=0; i<connectionArray.length; i++) {

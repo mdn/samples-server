@@ -134,29 +134,13 @@ function connect() {
       case "video-accept":
         log("Call recipient has accepted request to negotiate");
         
-        // Set up an |icecandidate| event handler which will forward
-        // candiates created by our local ICE layer to the remote peer.
-        
-        myPeerConnection.onicecandidate = function(event) {
-          log("*** icecandidate ***");
-          if (event.candidate) {
-            log("Outgoing ICE candidate: " + event.candidate.candidate);
-    
-            sendToServer({
-              type: "new-ice-candidate",
-              target: targetUsername,
-              candidate: event.candidate
-            });
-          }
-        };
-        
         // Create an offer, set it as the description of our local media
         // (which configures our local media stream), then send the
         // description to the callee as an offer. This is a proposed media
         // format, codec, resolution, etc.
         
         log("---> Creating offer");
-        myPeerConnection.createOffer().then(offer => {
+        myPeerConnection.createOffer().then(function(offer) {
           log("---> Creating new description object to send to remote peer");
           return myPeerConnection.setLocalDescription(offer);
         })
@@ -174,22 +158,8 @@ function connect() {
       
       // Signaling messages
       
-      // A new ICE candidate has been received from the other peer. Call
-      // RTCPeerConnection.addIceCandidate() to send it along to the
-      // local ICE framework.
-      case "new-ice-candidate":
-        log("Received ICE candidate from remote peer: " + JSON.stringify(msg.candidate));
-        {
-          var candidate = new RTCIceCandidate(msg.candidate);
-          log("Adding candidate: " + candidate);
-          myPeerConnection.addIceCandidate(candidate)
-            .catch(reportError);
-        }
-        break;
-      
-      // A new SDP description has arrived, describing a potential
-      // call configuration. Set the remote description by calling
-      // RTCPeerConnection.setRemoveDescription().
+      // A new SDP description has arrived, representing either an offer
+      // (sent by the caller) or an answer (sent by the callee).
       case "new-description": {
         log("Received SDP description from remote peer");
         
@@ -240,6 +210,19 @@ function connect() {
         }
         break;
       }
+      
+      // A new ICE candidate has been received from the other peer. Call
+      // RTCPeerConnection.addIceCandidate() to send it along to the
+      // local ICE framework.
+      case "new-ice-candidate":
+        log("Received ICE candidate from remote peer: " + JSON.stringify(msg.candidate));
+        {
+          var candidate = new RTCIceCandidate(msg.candidate);
+          log("Adding candidate: " + JSON.stringify(candidate));
+          myPeerConnection.addIceCandidate(candidate)
+            .catch(reportError);
+        }
+        break;
       
       // The other end of the call has closed the call. Close our end, too.
       
@@ -304,12 +287,30 @@ function setupVideoCall(signalMessage) {
         { urls: "stun:" + stunServer }   // A STUN server
       ]
   });
+  
+  // Set up an |icecandidate| event handler which will forward
+  // candiates created by our local ICE layer to the remote peer.
+  
+  myPeerConnection.onicecandidate = function(event) {
+    log("*** icecandidate ***");
+    if (event.candidate) {
+      log("Outgoing ICE candidate: " + event.candidate.candidate);
+
+      sendToServer({
+        type: "new-ice-candidate",
+        target: targetUsername,
+        candidate: event.candidate
+      });
+    }
+  };
 
   // Set up a handler which is called when a stream starts coming in
   // from the callee.
         
   myPeerConnection.onaddstream = function(event) {
     log("*** addstream ***");
+    log("    >> Setting stream to " + JSON.stringify(event.stream));
+    
     document.getElementById("received_video").src = window.URL.createObjectURL(event.stream);
     document.getElementById("received_video").srcObject = event.stream;
     document.getElementById("video-close").disabled = false;
@@ -335,8 +336,8 @@ function setupVideoCall(signalMessage) {
   // "connection failure" scenarios should occur, so sometimes they simply
   // don't happen.
   
-  myPeerConnection.oniceconnectionstate = function(event) {
-    log("*** RECEIVED ICE STATE CHANGE: " + myPeerConnection.iceConnectionState);
+  myPeerConnection.oniceconnectionstatechange = function(event) {
+    log("*** RECEIVED ICE CONNECTION STATE CHANGE: " + myPeerConnection.iceConnectionState);
     
     switch(myPeerConnection.iceConnectionState) {
       case "closed":
@@ -345,6 +346,16 @@ function setupVideoCall(signalMessage) {
         closeVideoCall(true);
         break;
     }
+  };
+  
+  // Handle changes to the ICE gathering state. This lets us know what the
+  // ICE engine is currently working on: "new" means no networking has happened
+  // yet, "gathering" means the ICE engine is currently gathering candidates,
+  // and "complete" means gathering is complete. Note that the engine can
+  // alternate between "gathering" and "complete" repeatedly as needs and
+  // circumstances change.
+  myPeerConnection.onicegatheringstatechange = function(event) {
+    log("*** RECEIVED ICE GATHERING STATE CHANGE: " + myPeerConnection.iceGatheringState);
   };
   
   // Set up a signaling state change event handler. This will detect when
@@ -429,8 +440,9 @@ function closeVideoCall(sendCloseMessage) {
     myPeerConnection.onaddstream = null;
     myPeerConnection.onremovestream = null;
     myPeerConnection.onnicecandidate = null;
-    myPeerConnection.oniceconnectionstate = null;
+    myPeerConnection.oniceconnectionstatechange = null;
     myPeerConnection.onsignalingstatechange = null;
+    myPeerConnection.onicegatheringstatechange = null;
     
     // Stop the videos
     
@@ -450,7 +462,7 @@ function closeVideoCall(sendCloseMessage) {
   document.getElementById("video-close").disabled = true;
   
   // If sendCloseMessage is true, ask the other end to hang up too.
-  
+  /*
   if (sendCloseMessage) {
     log("--> Asking the other end to close too");
     sendToServer({
@@ -459,7 +471,7 @@ function closeVideoCall(sendCloseMessage) {
       type: "video-close"
     });
   }
-
+*/
   targetUsername = null;
 }
 
