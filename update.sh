@@ -22,6 +22,10 @@ systemctl start sshd.service
 
 cd /var/www/html && git pull
 
+# Get the current version of adapter.js
+
+curl https://webrtc.github.io/adapter/adapter-latest.js > /var/www/html/s/adapter.js
+
 # Set owner of the web tree
 
 chown -R root:www /var/www
@@ -38,6 +42,10 @@ find /var/www -type f -exec chmod 0664 {} +
 
 systemctl start  httpd.service
 systemctl enable httpd.service
+
+# Start the turn server
+
+turnserver --syslog -a -o -L 172.31.45.0 -X 52.5.80.241 -E 172.31.45.0 -f --min-port=32355 --max-port=65535 --user=webrtc:turnserver -r mdnSamples --log-file=stdout -v
 
 # Start spinning up Sample Server stuff here
 
