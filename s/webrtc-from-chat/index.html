@@ -13,7 +13,8 @@
   in the user list to ask them to enter a one-on-one video chat with you.
   <a href="https://github.com/mdn/samples-server/tree/master/s/webrtc-from-chat">
   Check out the source</a> on Github.</p>
-  <p>Enter a username: <input id="name" type="text" maxlength="12" placeholder="Your name">
+  <p>Enter a username: <input id="name" type="text" maxlength="12" required
+      autocomplete="username" inputmode="verbatim" placeholder="Username">
   <input type="button" name="login" value="Log in" onclick="connect()"></p>
   
   <div id="container" class="flexChild columnParent">
