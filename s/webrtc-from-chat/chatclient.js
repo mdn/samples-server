@@ -5,10 +5,6 @@
 var connection = null;
 var clientID = 0;
 
-// WebRTC connection variables.
-
-var stunServer = "stun.l.google.com:19302";   // Use your own!
-
 // The media constraints object describes what sort of stream we want
 // to request from the local A/V hardware (typically a webcam and
 // microphone). Here, we specify only that we want both audio and
@@ -282,9 +278,18 @@ function setupVideoCall(signalMessage) {
   // STUN server.
   
   myPeerConnection = new RTCPeerConnection({
-      iceServers: [     // Information about ICE servers
-//        { urls: "stun:52.5.80.241:3478" },
-        { urls: "stun:" + stunServer }   // A STUN server
+      iceServers: [     // Information about ICE servers - Use your own!
+        {
+          urls: "stun:52.5.80.241"   // A STUN server
+        },
+        {
+          urls: "stun:stun.l.google.com:19302"
+        },
+        {
+          urls: "turn:52.5.80.241",  // A TURN server
+          username: "webrtc",
+          credential: "turnserver"
+        }
       ]
   });
   
@@ -309,9 +314,7 @@ function setupVideoCall(signalMessage) {
         
   myPeerConnection.onaddstream = function(event) {
     log("*** addstream ***");
-    log("    >> Setting stream to " + JSON.stringify(event.stream));
     
-    document.getElementById("received_video").src = window.URL.createObjectURL(event.stream);
     document.getElementById("received_video").srcObject = event.stream;
     document.getElementById("video-close").disabled = false;
   };
