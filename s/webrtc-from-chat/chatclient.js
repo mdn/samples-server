@@ -1,3 +1,14 @@
+// WebSocket and WebRTC based multi-user chat sample with two-way video
+// calling, including use of TURN if applicable or necessary.
+//
+// This file contains the JavaScript code that implements the client-side
+// features for connecting and managing chat and video calls.
+//
+// To read about how this sample works:  http://bit.ly/webrtc-from-chat
+//
+// Any copyright is dedicated to the Public Domain.
+// http://creativecommons.org/publicdomain/zero/1.0/
+
 "use strict";
 
 // WebSocket chat/signaling channel variables.
