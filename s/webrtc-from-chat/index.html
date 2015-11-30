@@ -1,4 +1,20 @@
 <!doctype html>
+
+<!--
+    WebSocket chat client
+   
+    WebSocket and WebRTC based multi-user chat sample with two-way video
+    calling, including use of TURN if applicable or necessary.
+   
+    This file provides the structure of the chat client's web page, including
+    logging in, text chatting, and making private video calls to other users.
+   
+    To read about how this sample works:  http://bit.ly/webrtc-from-chat
+   
+    Any copyright is dedicated to the Public Domain.
+    http:   creativecommons.org/publicdomain/zero/1.0/
+-->
+
 <html>
 <head>
   <title>WebSocket Chat Demo with WebRTC Calling</title>
@@ -13,7 +29,8 @@
   in the user list to ask them to enter a one-on-one video chat with you.
   <a href="https://github.com/mdn/samples-server/tree/master/s/webrtc-from-chat">
   Check out the source</a> on Github.</p>
-  <p>Enter a username: <input id="name" type="text" maxlength="12" placeholder="Your name">
+  <p>Enter a username: <input id="name" type="text" maxlength="12" required
+      autocomplete="username" inputmode="verbatim" placeholder="Username">
   <input type="button" name="login" value="Log in" onclick="connect()"></p>
   
   <div id="container" class="flexChild columnParent">

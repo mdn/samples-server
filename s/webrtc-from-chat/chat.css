@@ -1,3 +1,18 @@
+/*
+    WebSocket chat client
+   
+    WebSocket and WebRTC based multi-user chat sample with two-way video
+    calling, including use of TURN if applicable or necessary.
+   
+    This file describes the styling for the contents of the site as
+    presented to users.
+   
+    To read about how this sample works:  http://bit.ly/webrtc-from-chat
+   
+    Any copyright is dedicated to the Public Domain.
+    http:   creativecommons.org/publicdomain/zero/1.0/
+*/
+
 /* The list of users on the left side */
 
 #userlistbox {
@@ -28,7 +43,7 @@
 /* The video panel */
 .camera-box {
   width: 500px;
-  height: 100%;
+  height: 760px;
   display:block;
   vertical-align:top;
   position:relative;
@@ -71,7 +86,18 @@
   font-size: 14px;
   font-family: "Lucida Grande", "Arial", sans-serif;
   color: rgba(255, 255, 255, 1.0);
-  cursor:pointer;
+  cursor: pointer;
+}
+
+#video-close:hover {
+  filter: brightness(150%);
+  -webkit-filter: brightness(150%);
+}
+
+#video-close:disabled {
+  filter: grayscale(50%);
+  -webkit-filter: grayscale(50%);
+  cursor: default;
 }
 
 /*** Flexbox layout ***/

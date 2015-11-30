@@ -9,6 +9,9 @@
 # This script is based on this tutorial on the AWS docs site:
 #    http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-LAMP.html
 #
+# Any copyright is dedicated to the Public Domain.
+# http://creativecommons.org/publicdomain/zero/1.0/
+#
 
 # Install packages needed for Web server support
 
@@ -25,14 +28,17 @@ usermod -a -G www ec2-user
 
 git clone https://github.com/mdn/samples-server /var/www/html
 
-# Pull the main startup script from github
+# Pull the main startup scripts from github
 
 curl https://raw.githubusercontent.com/mdn/samples-server/master/update.sh > /usr/local/bin/update.sh
 chmod +x /usr/local/bin/update.sh
 
+curl https://raw.githubusercontent.com/mdn/samples-server/master/startup.py > /var/lib/cloud/scripts/per-boot/startup.py
+chmod +x /var/lib/cloud/scripts/per-boot/startup.py
+
 # Create the service that will run the startup script on boot
 
-# Run the startup script; this will update the operating system and
+# Run the updater script; this will update the operating system and
 # system tools, then pull the latest code from Github
 
 /usr/local/bin/update.sh
