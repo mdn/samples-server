@@ -11,6 +11,11 @@
 
 "use strict";
 
+// Get our hostname
+
+var myHostname = window.location.hostname;
+console.log("Hostname: " + myHostname);
+
 // WebSocket chat/signaling channel variables.
 
 var connection = null;
@@ -74,7 +79,7 @@ function setUsername() {
 // Open and configure the connection to the WebSocket server.
 
 function connect() {
-  var serverUrl = "ws://" + window.location.hostname + ":6503";
+  var serverUrl = "ws://" + myHostname + ":6503";
 
   connection = new WebSocket(serverUrl, "json");
 
@@ -291,13 +296,13 @@ function setupVideoCall(signalMessage) {
   myPeerConnection = new RTCPeerConnection({
       iceServers: [     // Information about ICE servers - Use your own!
         {
-          urls: "stun:52.5.80.241"   // A STUN server
+          urls: "stun:" + hostname   // A STUN server
         },
         {
           urls: "stun:stun.l.google.com:19302"
         },
         {
-          urls: "turn:52.5.80.241",  // A TURN server
+          urls: "turn:" + hostname,  // A TURN server
           username: "webrtc",
           credential: "turnserver"
         }

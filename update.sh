@@ -6,6 +6,14 @@
 #
 # It then calls the startup.py script to start each sample's
 # background tasks as needed.
+#
+# Any copyright is dedicated to the Public Domain.
+# http://creativecommons.org/publicdomain/zero/1.0/
+
+# Get information we need about our server setup
+
+PUBLIC_IP=$(curl --silent http://169.254.169.254/latest/meta-data/public-ipv4)
+LOCAL_IP=$(curl --silent http://169.254.169.254/latest/meta-data/local-ipv4)
 
 # Update existing software
 
@@ -45,7 +53,7 @@ systemctl enable httpd.service
 
 # Start the turn server
 
-turnserver --syslog -a -o -L 172.31.45.0 -X 52.5.80.241 -E 172.31.45.0 -f --min-port=32355 --max-port=65535 --user=webrtc:turnserver -r mdnSamples --log-file=stdout -v
+turnserver --syslog -a -o -L $LOCAL_IP -X $PUBLIC_IP -E $LOCAL_IP -f --min-port=32355 --max-port=65535 --user=webrtc:turnserver -r mdnSamples --log-file=stdout -v
 
 # Start spinning up Sample Server stuff here
 
