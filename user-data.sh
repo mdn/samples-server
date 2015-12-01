@@ -18,6 +18,9 @@
 yum groupinstall -y "Web Server" "PHP Support"
 yum install -y nodejs
 yum install -y npm
+yum install -y openssl-devel
+yum install -y sqlite-devel
+yum install -y libevent-devel
 
 # Create a group for the Web content and add the default user to it
 
@@ -35,8 +38,6 @@ chmod +x /usr/local/bin/update.sh
 
 curl https://raw.githubusercontent.com/mdn/samples-server/master/startup.py > /var/lib/cloud/scripts/per-boot/startup.py
 chmod +x /var/lib/cloud/scripts/per-boot/startup.py
-
-# Create the service that will run the startup script on boot
 
 # Run the updater script; this will update the operating system and
 # system tools, then pull the latest code from Github
