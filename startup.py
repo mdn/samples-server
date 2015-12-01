@@ -26,16 +26,17 @@ def startService(path):
   if os.path.exists(startupScript):
     sys.stdout.flush()
     
-    pw_record = pwd.getpwnam("apache")
+#    pw_record = pwd.getpwnam("apache")
     
-    env = os.environ.copy()
-    env['HOME'] = pw_record.pw_dir
-    env['LOGNAME'] = pw_record.pw_name
-    env['PWD'] = path
-    env['USER'] = pw_record.pw_name
+#    env = os.environ.copy()
+#    env['HOME'] = pw_record.pw_dir
+#    env['LOGNAME'] = pw_record.pw_name
+#    env['PWD'] = path
+#    env['USER'] = pw_record.pw_name
     
     process = subprocess.Popen(
-      ["/bin/bash", startupScript], cwd = path, env = env, preexec_fn=demoteUser(pw_record.pw_uid, pw_record.pw_gid)
+#      ["/bin/bash", startupScript], cwd = path, env = env, preexec_fn=demoteUser(pw_record.pw_uid, pw_record.pw_gid)
+      ["/bin/bash", startupScript], cwd = path
     )
     
     # TODO: At some point we should record process IDs for restarts/shutdowns/etc
