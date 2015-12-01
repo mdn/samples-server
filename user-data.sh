@@ -3,11 +3,16 @@
 # This script is a once-per-instantiation script which is run the first time
 # the MDN sample server instance is started up.
 #
-# This lets us do things like ensure that specific software is installed,
-# as well as to spin-up needed background tasks.
+# Its job is to do the initial install of required software, make needed
+# changes to the main user account, clone the site contents into place as
+# a starting point, and install the script that should run at boot time.
+# That script runs on every server startup, including at instantiation (in
+# which case it happens after this instantiation-time script is complete).
 #
 # This script is based on this tutorial on the AWS docs site:
 #    http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-LAMP.html
+#
+# On AWS, this should be pasted into the "User data" field in Step 3.
 #
 # Any copyright is dedicated to the Public Domain.
 # http://creativecommons.org/publicdomain/zero/1.0/
@@ -28,17 +33,7 @@ usermod -a -G www ec2-user
 
 git clone https://github.com/mdn/samples-server /var/www/html
 
-# Pull the main startup scripts from github
+# Pull the main startup script from github
 
-curl https://raw.githubusercontent.com/mdn/samples-server/master/update.sh > /usr/local/bin/update.sh
-chmod +x /usr/local/bin/update.sh
-
-curl https://raw.githubusercontent.com/mdn/samples-server/master/startup.py > /var/lib/cloud/scripts/per-boot/startup.py
-chmod +x /var/lib/cloud/scripts/per-boot/startup.py
-
-# Create the service that will run the startup script on boot
-
-# Run the updater script; this will update the operating system and
-# system tools, then pull the latest code from Github
-
-/usr/local/bin/update.sh
+curl https://raw.githubusercontent.com/mdn/samples-server/master/update.sh > /var/lib/cloud/scripts/per-boot/update.sh
+chmod +x /var/lib/cloud/scripts/per-boot/update.sh
