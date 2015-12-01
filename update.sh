@@ -10,6 +10,10 @@
 # Any copyright is dedicated to the Public Domain.
 # http://creativecommons.org/publicdomain/zero/1.0/
 
+# Setting variables
+
+COTURN_VERSION=4.5.0.3
+
 # Get information we need about our server setup
 
 PUBLIC_IP=$(curl --silent http://169.254.169.254/latest/meta-data/public-ipv4)
@@ -51,7 +55,28 @@ find /var/www -type f -exec chmod 0664 {} +
 systemctl start  httpd.service
 systemctl enable httpd.service
 
-# Start the turn server
+# Build, install, and start the turn server
+
+echo "Downloading coturn $COTURN_VERSION (STUN/TURN server software)"
+if [ -f /tmp/turnserver.tar.gz]; then
+  rm /tmp/turnserver.tar.gz
+fi
+if [ -f /tmp/coturn-$COTURN_VERSION ]; then
+  rm -r /tmp/coturn-$COTURN_VERSION
+fi
+
+if curl --silent --fail https://codeload.github.com/coturn/coturn/tar.gz/$COTURN_VERSION > /tmp/turnserver.tar.gz; then
+  # Successful download -- build now
+  pushd /tmp
+  tar zxf turnserver.tar.gz
+  cd /tmp/coturn-$COTURN_VERSION
+  ./configure
+  make install
+  popd
+else
+  # Failed download -- decide what to do...
+  echo "ERROR: Failed to download coturn (TURN/STUN server software)"
+fi;
 
 turnserver --syslog -a -o -L $LOCAL_IP -X $PUBLIC_IP -E $LOCAL_IP -f --min-port=32355 --max-port=65535 --user=webrtc:turnserver -r mdnSamples --log-file=stdout -v
 

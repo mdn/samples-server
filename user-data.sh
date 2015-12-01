@@ -23,6 +23,9 @@
 yum groupinstall -y "Web Server" "PHP Support"
 yum install -y nodejs
 yum install -y npm
+yum install -y openssl-devel
+yum install -y sqlite-devel
+yum install -y libevent-devel
 
 # Create a group for the Web content and add the default user to it
 
