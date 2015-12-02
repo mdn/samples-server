@@ -10,6 +10,8 @@
 # Any copyright is dedicated to the Public Domain.
 # http://creativecommons.org/publicdomain/zero/1.0/
 
+echo "Starting boot-time site update"
+
 # Setting variables
 
 COTURN_VERSION=4.5.0.3
@@ -21,6 +23,7 @@ LOCAL_IP=$(curl --silent http://169.254.169.254/latest/meta-data/local-ipv4)
 
 # Update existing software
 
+echo "Updating system software..."
 yum update -y
 
 # Ensure that sshd is set up right and start it
@@ -28,14 +31,17 @@ yum update -y
 chmod 711 /var/empty/sshd
 chmod 600 /etc/ssh/*_key
 
+echo "Starting SSH daemon..."
 systemctl start sshd.service
 
 # Pull the latest Web content, including the samples
 
+echo "Updating Web site contents..."
 cd /var/www/html && git pull
 
 # Get the current version of adapter.js
 
+echo "Updating adapter.js..."
 curl https://webrtc.github.io/adapter/adapter-latest.js > /var/www/html/s/adapter.js
 
 # Set owner of the web tree
@@ -52,6 +58,7 @@ find /var/www -type f -exec chmod 0664 {} +
 
 # Make sure the web server is running
 
+echo "Starting HTTP server..."
 systemctl start  httpd.service
 systemctl enable httpd.service
 
@@ -78,8 +85,10 @@ else
   echo "ERROR: Failed to download coturn (TURN/STUN server software)"
 fi;
 
+echo "Starting TURN/STUN server..."
 turnserver --syslog -a -o -L $LOCAL_IP -X $PUBLIC_IP -E $LOCAL_IP -f --min-port=32355 --max-port=65535 --user=webrtc:turnserver -r mdnSamples --log-file=stdout -v
 
 # Start spinning up Sample Server stuff here
 
+echo "Starting service runner..."
 /usr/bin/python /var/www/html/startup.py &
