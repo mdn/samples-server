@@ -296,13 +296,13 @@ function setupVideoCall(signalMessage) {
   myPeerConnection = new RTCPeerConnection({
       iceServers: [     // Information about ICE servers - Use your own!
         {
-          urls: "stun:" + hostname   // A STUN server
+          urls: "stun:" + myHostname   // A STUN server
         },
         {
           urls: "stun:stun.l.google.com:19302"
         },
         {
-          urls: "turn:" + hostname,  // A TURN server
+          urls: "turn:" + myHostname,  // A TURN server
           username: "webrtc",
           credential: "turnserver"
         }
