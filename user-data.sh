@@ -43,4 +43,5 @@ chmod +x /var/lib/cloud/scripts/per-boot/update.sh
 
 # Run the update script so it runs at instantiation time
 
-/var/lib/cloud/scripts/per-boot/update.sh
+echo "Starting update script..."
+/usr/bin/bash /var/lib/cloud/scripts/per-boot/update.sh
