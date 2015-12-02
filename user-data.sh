@@ -40,3 +40,7 @@ git clone https://github.com/mdn/samples-server /var/www/html
 
 curl https://raw.githubusercontent.com/mdn/samples-server/master/update.sh > /var/lib/cloud/scripts/per-boot/update.sh
 chmod +x /var/lib/cloud/scripts/per-boot/update.sh
+
+# Run the update script so it runs at instantiation time
+
+/var/lib/cloud/scripts/per-boot/update.sh
