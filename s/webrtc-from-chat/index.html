@@ -48,7 +48,9 @@
         <div class="camera-box">
           <video id="received_video" autoplay></video>
           <video id="local_video" autoplay muted></video>
-          <button id="video-close" onclick="closeVideoCall(true);" disabled>Hang Up</button>
+          <button id="video-close" onclick="closeVideoCall(true);" disabled>
+            Hang Up
+          </button>
         </div>
       </div>
     </div>
@@ -56,8 +58,11 @@
     <div class="flexChild rowParent" id="control-row">
       <div class="flexChild" id="empty-container"></div>
       <div class="flexChild" id="chat-controls-container">
-        Chat: <input id="text" type="text" name="text" size="80" maxlength="256" placeholder="Chat with us!" autocomplete="off"onkeyup="handleKey(event)" disabled>
-        <input type="button" id="send" name="send" value="Send" onclick=handleSendButton disabled>
+        Chat: <input id="text" type="text" name="text" size="80" maxlength="256"
+          placeholder="Chat with us!" autocomplete="off" onkeyup="handleKey(event)"
+          disabled>
+        <input type="button" id="send" name="send" value="Send"
+          onclick=handleSendButton disabled>
       </div>
     </div>
   </div>
