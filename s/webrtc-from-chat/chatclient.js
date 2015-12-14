@@ -110,7 +110,8 @@ function connect() {
         break;
       case "rejectusername":
         myUsername = msg.name;
-        text = "<b>Your username has been set to <em>" + myUsername + "</em> because the name you chose is in use.</b><br>";
+        text = "<b>Your username has been set to <em>" + myUsername +
+          "</em> because the name you chose is in use.</b><br>";
         break;
       case "userlist":
         var ul = "";
@@ -356,7 +357,7 @@ function setupVideoCall(signalMessage) {
   // don't happen.
   
   myPeerConnection.oniceconnectionstatechange = function(event) {
-    log("*** RECEIVED ICE CONNECTION STATE CHANGE: " + myPeerConnection.iceConnectionState);
+    log("*** ICE connection state changing to " + myPeerConnection.iceConnectionState);
     
     switch(myPeerConnection.iceConnectionState) {
       case "closed":
