@@ -40,7 +40,7 @@ var mediaConstraints = {
 };
 
 var myUsername = null;
-var targetUsername = null;  // To store username of other peer
+var targetUsername = null;      // To store username of other peer
 var myPeerConnection = null;    // RTCPeerConnection
 
 // Output logging information to console
@@ -114,26 +114,25 @@ function connect() {
           "</em> because the name you chose is in use.</b><br>";
         break;
       case "userlist":
-        var ul = "";
         var i;
-        
+  
         var listElem = document.getElementById("userlistbox");
-        
+  
         // Remove all current list members. We could do this smarter,
         // by adding and updating users instead of rebuilding from
         // scratch but this will do for this sample.
-        
+  
         while (listElem.firstChild) {
           listElem.removeChild(listElem.firstChild);
         }
-        
+  
         // Add member names from the received list
 
         for (i=0; i < msg.users.length; i++) {
           var item = document.createElement("li");
           item.appendChild(document.createTextNode(msg.users[i]));
           item.addEventListener("click", invite, false);
-          
+
           listElem.appendChild(item);
         }
         break;
