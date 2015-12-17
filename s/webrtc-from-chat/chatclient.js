@@ -119,23 +119,29 @@ function connect() {
         clientID = msg.id;
         setUsername();
         break;
+
       case "username":
         text = "<b>User <em>" + msg.name + "</em> signed in at " + timeStr + "</b><br>";
         break;
+        
       case "message":
         text = "(" + timeStr + ") <b>" + msg.name + "</b>: " + msg.text + "<br>";
         break;
+
       case "rejectusername":
         myUsername = msg.name;
         text = "<b>Your username has been set to <em>" + myUsername +
           "</em> because the name you chose is in use.</b><br>";
         break;
+
       case "userlist":      // Received an updated user list
         handleUserlistMsg(msg);
         break;
+
       case "video-invite":  // Invited to a video call
         handleVideoInviteMsg(msg);
         break;
+
       case "video-accept":  // Callee has accepted our request for video
         handleVideoAcceptMsg(msg);
         break;
@@ -144,8 +150,12 @@ function connect() {
       // signaling information during negotiations leading up to a video
       // call.
 
-      case "offer-or-answer": // An SDP offer or answer has arrived
-        handleOfferOrAnswerMsg(msg);
+      case "sdp-offer":   // An SDP offer has been received from a caller
+        handleOfferMsg(msg);
+        break;
+
+      case "sdp-answer":  // An SDP answer has arrived from the callee
+        handleAnswerMsg(msg);
         break;
 
       case "new-ice-candidate": // A new ICE candidate has been received
@@ -492,66 +502,68 @@ function handleVideoAcceptMsg(msg) {
     return myPeerConnection.setLocalDescription(offer);
   })
   .then(function() {
-    log("---> Sending description to remote peer");
+    log("---> Sending offer to remote peer");
     sendToServer({
       name: myUsername,
       target: targetUsername,
-      type: "offer-or-answer",
+      type: "sdp-offer",
       sdp: myPeerConnection.localDescription
     });
   })
   .catch(reportError);
 }
 
-// The received message is either an SDP offer or an SDP answer,
-// describing a possible configuration for a WebRTC call.
+// Handle an SDP offer.
 
-function handleOfferOrAnswerMsg(msg) {
-  log("Received SDP description from remote peer");
+function handleOfferMsg(msg) {
+  log("Received SDP offer!");
 
   var desc = new RTCSessionDescription(msg.sdp);
 
-  log("--> SDP payload found of type: " + desc.type);
-  if (desc.type === "offer") {
-    // Received an offer from the caller. We need to set the remote description
-    // to this SDP payload so that our local WebRTC layer knows how to talk to
-    // the caller.
-    myPeerConnection.setRemoteDescription(desc).then(function () {
-      log("------> Creating answer");
-      // Now that we've successfully set the remote description, we need to
-      // create an SDP answer; this SDP data describes the local end of our
-      // call, including the codec information, options agreed upon, and so
-      // forth.
-      return myPeerConnection.createAnswer();
-    })
-    .then(function(answer) {
-      log("------> Setting local description after creating answer");
-      // We now have our answer, so establish that as the local description.
-      // This actually configures our end of the call to match the settings
-      // specified in the SDP.
-      return myPeerConnection.setLocalDescription(answer);
-    })
-    .then(function() {
-      log("Sending answer packet back to other peer");
-      // We've configured our end of the call now. Time to send our
-      // answer back to the caller so they know we're set up. That
-      // should complete the process of starting up the call!
-      sendToServer({
-        name: myUsername,
-        target: targetUsername,
-        type: "offer-or-answer",
-        sdp: myPeerConnection.localDescription
-      });
-    })
-    .catch(reportError);
-  } else if (desc.type === "answer") {
-    // We've received an answer which has the details we need in
-    // order to exchange media with the other end, so configure
-    // ourselves to match. Now we're talking to the callee!
-    myPeerConnection.setRemoteDescription(desc).catch(reportError);
-  } else {
-    log("*** Unknown SDP payload type");
-  }
+  // Received an offer from the caller. We need to set the remote description
+  // to this SDP payload so that our local WebRTC layer knows how to talk to
+  // the caller.
+
+  myPeerConnection.setRemoteDescription(desc).then(function () {
+    log("------> Creating answer");
+    // Now that we've successfully set the remote description, we need to
+    // create an SDP answer; this SDP data describes the local end of our
+    // call, including the codec information, options agreed upon, and so
+    // forth.
+    return myPeerConnection.createAnswer();
+  })
+  .then(function(answer) {
+    log("------> Setting local description after creating answer");
+    // We now have our answer, so establish that as the local description.
+    // This actually configures our end of the call to match the settings
+    // specified in the SDP.
+    return myPeerConnection.setLocalDescription(answer);
+  })
+  .then(function() {
+    log("Sending answer packet back to other peer");
+    // We've configured our end of the call now. Time to send our
+    // answer back to the caller so they know we're set up. That
+    // should complete the process of starting up the call!
+    sendToServer({
+      name: myUsername,
+      target: targetUsername,
+      type: "sdp-answer",
+      sdp: myPeerConnection.localDescription
+    });
+  })
+  .catch(reportError);
+}
+
+// The received message is an SDP answer, so we've got
+// a description we can establish as the remote description for
+// the call we're setting up. Once that's done, we should be
+// up and running with a video call.
+
+function handleAnswerMsg(msg) {
+  log("Received SDP answer!");
+
+  var desc = new RTCSessionDescription(msg.sdp);
+  myPeerConnection.setRemoteDescription(desc).catch(reportError);
 }
 
 // A new ICE candidate has been received from the other peer. Call
