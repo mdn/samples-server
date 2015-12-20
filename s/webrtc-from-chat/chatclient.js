@@ -123,7 +123,7 @@ function connect() {
       case "username":
         text = "<b>User <em>" + msg.name + "</em> signed in at " + timeStr + "</b><br>";
         break;
-        
+
       case "message":
         text = "(" + timeStr + ") <b>" + msg.name + "</b>: " + msg.text + "<br>";
         break;
@@ -232,91 +232,19 @@ function setupVideoCall(signalMessage) {
       ]
   });
 
-  // Set up an |icecandidate| event handler which will forward
-  // candiates created by our local ICE layer to the remote peer.
+  // Set up event handlers for the ICE negotiation process.
 
-  myPeerConnection.onicecandidate = function(event) {
-    if (event.candidate) {
-      log("Outgoing ICE candidate: " + event.candidate.candidate);
+  myPeerConnection.onicecandidate = handleICECandidateEvent;
+  myPeerConnection.onaddstream = handleAddStreamEvent;
+  myPeerConnection.onnremovestream = handleRemoveStreamEvent;
+  myPeerConnection.oniceconnectionstatechange = handleICEConnectionStateChangeEvent;
+  myPeerConnection.onicegatheringstatechange = handleICEGatheringStateChangeEvent;
+  myPeerConnection.onsignalingstatechange = handleSignalingStateChangeEvent;
 
-      sendToServer({
-        type: "new-ice-candidate",
-        target: targetUsername,
-        candidate: event.candidate
-      });
-    }
-  };
-
-  // Set up a handler which is called when a stream starts coming in
-  // from the callee.
-
-  myPeerConnection.onaddstream = function(event) {
-    document.getElementById("received_video").srcObject = event.stream;
-    document.getElementById("hangup-button").disabled = false;
-  };
-
-  // Set up a handler which is called when the remote end of the connection
-  // removes its stream. We consider this the same as hanging up the call.
-  // It could just as well be treated as a "mute".
-  //
-  // Note that currently, the spec is hazy on exactly when this and other
-  // "connection failure" scenarios should occur, so sometimes they simply
-  // don't happen.
-
-  myPeerConnection.onnremovestream = function(event) {
-    closeVideoCall();
-  };
-
-  // Set up an ICE connection state change event handler. This will detect
-  // when the ICE connection is closed, failed, or disconnected.
-  //
-  // Note that currently, the spec is hazy on exactly when this and other
-  // "connection failure" scenarios should occur, so sometimes they simply
-  // don't happen.
-
-  myPeerConnection.oniceconnectionstatechange = function(event) {
-    log("*** ICE connection state changed to " + myPeerConnection.iceConnectionState);
-
-    switch(myPeerConnection.iceConnectionState) {
-      case "closed":
-      case "failed":
-      case "disconnected":
-        closeVideoCall();
-        break;
-    }
-  };
-
-  // Handle changes to the ICE gathering state. This lets us know what the
-  // ICE engine is currently working on: "new" means no networking has happened
-  // yet, "gathering" means the ICE engine is currently gathering candidates,
-  // and "complete" means gathering is complete. Note that the engine can
-  // alternate between "gathering" and "complete" repeatedly as needs and
-  // circumstances change.
-  myPeerConnection.onicegatheringstatechange = function(event) {
-    log("*** ICE gathering state changed to: " + myPeerConnection.iceGatheringState);
-  };
-
-  // Set up a signaling state change event handler. This will detect when
-  // the signaling connection is closed.
-  //
-  // Note that currently, the spec is hazy on exactly when this and other
-  // "connection failure" scenarios should occur, so sometimes they simply
-  // don't happen.
-
-  myPeerConnection.onsignalingstatechange = function(event) {
-    log("*** WebRTC signaling state changed to: " + myPeerConnection.signalingState);
-    switch(myPeerConnection.signalingState) {
-      case "closed":
-        closeVideoCall();
-        break;
-    }
-  };
-
-  // Start the process of connecting by requesting access to a
-  // stream of audio and video from the local user's camera. This
-  // returns a promise which when fulfilled provides the stream. At
-  // that time, we attach the stream to the local stream's <video>
-  // element, then add it to the RTCPeerConnection.
+  // Request access to a stream of audio and video from the local
+  // user's camera. This returns a promise which when fulfilled provides
+  // the stream. At that time, we attach the stream to the local stream's
+  // <video> element, then add it to the RTCPeerConnection.
 
   navigator.mediaDevices.getUserMedia(mediaConstraints)
   .then(function(localStream) {
@@ -342,6 +270,7 @@ function setupVideoCall(signalMessage) {
         alert("Unable to open your call because no camera and/or microphone" +
               "were found.");
         break;
+      case "SecurityError":
       case "PermissionDeniedError":
         // Do nothing; this is the same as the user canceling the call.
         break;
@@ -349,7 +278,97 @@ function setupVideoCall(signalMessage) {
         alert("Error opening your camera and/or microphone: " + e.message);
         break;
     }
+
+    // Make sure we shut down our end of the RTCPeerConnection so we're
+    // ready to try again.
+
+    closeVideoCall();
   });
+}
+
+// Called by the WebRTC layer when a stream starts arriving from the
+// remote peer.
+
+function handleAddStreamEvent(event) {
+  document.getElementById("received_video").srcObject = event.stream;
+  document.getElementById("hangup-button").disabled = false;
+}
+
+// An event handler which is called when the remote end of the connection
+// removes its stream. We consider this the same as hanging up the call.
+// It could just as well be treated as a "mute".
+//
+// Note that currently, the spec is hazy on exactly when this and other
+// "connection failure" scenarios should occur, so sometimes they simply
+// don't happen.
+
+function handleRemoveStreamEvent(event) {
+  closeVideoCall();
+}
+
+// Handles |icecandidate| events by forwarding the specified
+// ICE candidate (created by our local ICE agent) to the other
+// peer through the signaling server.
+
+function handleICECandidateEvent(event) {
+  if (event.candidate) {
+    log("Outgoing ICE candidate: " + event.candidate.candidate);
+
+    sendToServer({
+      type: "new-ice-candidate",
+      target: targetUsername,
+      candidate: event.candidate
+    });
+  }
+}
+
+// Handle |iceconnectionstatechange| events. This will detect
+// when the ICE connection is closed, failed, or disconnected.
+//
+// Note that currently, the spec is hazy on exactly when this and other
+// "connection failure" scenarios should occur, so sometimes they simply
+// don't happen.
+
+function handleICEConnectionStateChangeEvent(event) {
+  log("*** ICE connection state changed to " + myPeerConnection.iceConnectionState);
+
+  switch(myPeerConnection.iceConnectionState) {
+    case "closed":
+    case "failed":
+    case "disconnected":
+      closeVideoCall();
+      break;
+  }
+}
+
+// Set up a |signalingstatechange| event handler. This will detect when
+// the signaling connection is closed.
+//
+// Note that currently, the spec is hazy on exactly when this and other
+// "connection failure" scenarios should occur, so sometimes they simply
+// don't happen.
+
+function handleSignalingStateChangeEvent(event) {
+  log("*** WebRTC signaling state changed to: " + myPeerConnection.signalingState);
+  switch(myPeerConnection.signalingState) {
+    case "closed":
+      closeVideoCall();
+      break;
+  }
+}
+
+// Handle the |icegatheringstatechange| event. This lets us know what the
+// ICE engine is currently working on: "new" means no networking has happened
+// yet, "gathering" means the ICE engine is currently gathering candidates,
+// and "complete" means gathering is complete. Note that the engine can
+// alternate between "gathering" and "complete" repeatedly as needs and
+// circumstances change.
+//
+// We don't need to do anything when this happens, but we log it to the
+// console so you can see what's going on when playing with the sample.
+
+function handleICEGatheringStateChangeEvent(event) {
+  log("*** ICE gathering state changed to: " + myPeerConnection.iceGatheringState);
 }
 
 // Given a message containing a list of usernames, this function
@@ -408,8 +427,14 @@ function closeVideoCall() {
 
     // Stop the videos
 
-    remoteVideo.srcObject.getTracks().forEach(track => track.stop());
-    localVideo.srcObject.getTracks().forEach(track => track.stop());
+    if (remoteVideo.srcObject) {
+      remoteVideo.srcObject.getTracks().forEach(track => track.stop());
+    }
+
+    if (localVideo.srcObject) {
+      localVideo.srcObject.getTracks().forEach(track => track.stop());
+    }
+
     remoteVideo.src = null;
     localVideo.src = null;
 
