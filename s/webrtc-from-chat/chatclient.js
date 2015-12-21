@@ -290,6 +290,7 @@ function setupVideoCall(signalMessage) {
 // remote peer.
 
 function handleAddStreamEvent(event) {
+  log("*** Stream added");
   document.getElementById("received_video").srcObject = event.stream;
   document.getElementById("hangup-button").disabled = false;
 }
@@ -303,6 +304,7 @@ function handleAddStreamEvent(event) {
 // don't happen.
 
 function handleRemoveStreamEvent(event) {
+  log("*** Stream removed");
   closeVideoCall();
 }
 
