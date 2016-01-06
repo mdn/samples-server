@@ -219,12 +219,6 @@ function setupVideoCall(signalMessage) {
   myPeerConnection = new RTCPeerConnection({
       iceServers: [     // Information about ICE servers - Use your own!
         {
-          urls: "stun:" + myHostname   // A STUN server
-        },
-        {
-          urls: "stun:stun.l.google.com:19302"
-        },
-        {
           urls: "turn:" + myHostname,  // A TURN server
           username: "webrtc",
           credential: "turnserver"
@@ -240,6 +234,7 @@ function setupVideoCall(signalMessage) {
   myPeerConnection.oniceconnectionstatechange = handleICEConnectionStateChangeEvent;
   myPeerConnection.onicegatheringstatechange = handleICEGatheringStateChangeEvent;
   myPeerConnection.onsignalingstatechange = handleSignalingStateChangeEvent;
+  myPeerConnection.onnegotiationneeded = handleNegotiationNeededEvent;
 
   // Request access to a stream of audio and video from the local
   // user's camera. This returns a promise which when fulfilled provides
@@ -284,6 +279,33 @@ function setupVideoCall(signalMessage) {
 
     closeVideoCall();
   });
+}
+
+// Called by the WebRTC layer (or by ourselves) when it's time to
+// begin (or redo) ICE negotiation. Starts by making a WebRTC offer.
+// We create the offer, set it as the description of our local media
+// (which configures our local media stream), then send the
+// description to the callee as an offer. This is a proposed media
+// format, codec, resolution, etc.
+
+function handleNegotiationNeededEvent() {
+  log("*** Negotiation needed");
+
+  log("---> Creating offer");
+  myPeerConnection.createOffer().then(function(offer) {
+    log("---> Creating new description object to send to remote peer");
+    return myPeerConnection.setLocalDescription(offer);
+  })
+  .then(function() {
+    log("---> Sending offer to remote peer");
+    sendToServer({
+      name: myUsername,
+      target: targetUsername,
+      type: "sdp-offer",
+      sdp: myPeerConnection.localDescription
+    });
+  })
+  .catch(reportError);
 }
 
 // Called by the WebRTC layer when a stream starts arriving from the
@@ -514,30 +536,15 @@ function handleVideoInviteMsg(msg) {
 }
 
 // Responds to the "video-accept" message sent by the callee once
-// it's decided to accept our request to talk by making a WebRTC offer.
-// We create the offer, set it as the description of our local media
-// (which configures our local media stream), then send the
-// description to the callee as an offer. This is a proposed media
-// format, codec, resolution, etc.
+// it's decided to accept our request to talk.t
 
 function handleVideoAcceptMsg(msg) {
   log("Call recipient has accepted request to negotiate");
 
-  log("---> Creating offer");
-  myPeerConnection.createOffer().then(function(offer) {
-    log("---> Creating new description object to send to remote peer");
-    return myPeerConnection.setLocalDescription(offer);
-  })
-  .then(function() {
-    log("---> Sending offer to remote peer");
-    sendToServer({
-      name: myUsername,
-      target: targetUsername,
-      type: "sdp-offer",
-      sdp: myPeerConnection.localDescription
-    });
-  })
-  .catch(reportError);
+  // All we need to do here is call our negotiation needed handler,
+  // since starting negotiation is exactly what we want to do.
+
+  handleNegotiationNeededEvent();
 }
 
 // Handle an SDP offer.
