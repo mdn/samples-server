@@ -138,20 +138,24 @@ function connect() {
         handleUserlistMsg(msg);
         break;
 
-      case "video-offer":  // Invited to a video call
-        handleVideoOfferMsg(msg);
-        break;
-
       // Signaling messages: these messages are used to trade WebRTC
       // signaling information during negotiations leading up to a video
       // call.
 
-      case "video-answer":  // Callee has accepted our request for video
+      case "video-offer":  // Invitation and offer to chat
+        handleVideoOfferMsg(msg);
+        break;
+
+      case "video-answer":  // Callee has answered our offer
         handleVideoAnswerMsg(msg);
         break;
 
       case "new-ice-candidate": // A new ICE candidate has been received
         handleNewICECandidateMsg(msg);
+        break;
+
+      case "hang-up": // The other peer has hung up the call
+        handleHangUpMsg(msg);
         break;
 
       // Unknown message; output to console for debugging.
@@ -422,6 +426,30 @@ function closeVideoCall() {
   document.getElementById("hangup-button").disabled = true;
 
   targetUsername = null;
+}
+
+// Handle the "hang-up" message, which is sent if the other peer
+// has hung up the call or otherwise disconnected.
+
+function handleHangUpMsg(msg) {
+  log("*** Received hang up notification from other peer");
+
+  closeVideoCall();
+}
+
+// Hang up the call by closing our end of the connection, then
+// sending a "hang-up" message to the other peer (keep in mind that
+// the signaling is done on a different connection). This notifies
+// the other peer that the connection should be terminated and the UI
+// returned to the "no call in progress" state.
+
+function hangUpCall() {
+  closeVideoCall();
+  sendToServer({
+    name: myUsername,
+    target: targetUsername,
+    type: "hang-up"
+  });
 }
 
 // Handle a click on an item in the user list by inviting the clicked
