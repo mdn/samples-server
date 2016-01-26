@@ -527,8 +527,8 @@ function handleVideoOfferMsg(msg) {
   .then(function(stream) {
     log("-- Local video stream obtained");
     localStream = stream;
-  })
-  .then(function() {
+//  })
+//  .then(function() {
     document.getElementById("local_video").src = window.URL.createObjectURL(localStream);
     document.getElementById("local_video").srcObject = localStream;
       log("-- Calling myPeerConnection.addStream()");
