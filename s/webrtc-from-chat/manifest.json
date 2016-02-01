@@ -1,0 +1,5 @@
+{
+  "name": "WebSocket based chat server with WebRTC video chat support",
+  "docsUrl": "https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API/Signaling_and_video_calling",
+  "description": "Uses Node.js to set up a WebSocket-based chat server, and provides a web page you can use to join the chat. Adds a feature to start a video call with another chat participant."
+}
