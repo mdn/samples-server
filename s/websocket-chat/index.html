@@ -3,10 +3,14 @@
 <head>
   <title>WebSocket Chat Demo</title>
   <meta charset="utf-8">
+  <link href="../shared.css" rel="stylesheet">
   <script type="text/javascript" src="chatclient.js"></script>
 </head>
 <body>
   <p>This is a simple chat system implemented using WebSockets. It works by sending packets of JSON back and forth with the server.</p>
+  <p class="disclaimer">This text and audio/video chat example is offered as-is
+    for demonstration purposes only, and should not be used for any other
+    purpose.</p>
   <p>Enter a username: <input id="name" type="text" maxlength="12" placeholder="Your name">
   <input type="button" name="login" value="Log in" onclick="connect()"></p>
   <table border="0" width="100%">
