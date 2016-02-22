@@ -1,0 +1,21 @@
+/*
+    Styles to share across samples
+ */
+
+ html {
+   font-family:'Open Sans', 'Lucida Grande', Arial, Helvetica, sans-serif;
+ }
+
+.disclaimer {
+  font-family:'Open Sans', 'Lucida Grande', Arial, Helvetica, sans-serif;
+  font-size:18px;
+  background-color: #ddd;
+  color: black;
+  margin-left: 80px;
+  margin-right: 80px;
+  max-width: 620px;
+  padding: 12px;
+  border-radius: 5px;
+  border: 1px solid black;
+  box-shadow: 1px 1px 2px black;
+}
