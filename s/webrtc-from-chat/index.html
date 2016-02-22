@@ -20,15 +20,20 @@
   <title>WebSocket Chat Demo with WebRTC Calling</title>
   <meta charset="utf-8">
   <link href="chat.css" rel="stylesheet">
+  <link href="../shared.css" rel="stylesheet">
   <script type="text/javascript" src="chatclient.js"></script>
   <script src="../adapter.js"></script>
 </head>
 <body>
   <p>This is a simple chat system implemented using WebSockets. It works by
-  sending packets of JSON back and forth with the server. Click a username
-  in the user list to ask them to enter a one-on-one video chat with you.
+  sending packets of JSON back and forth with the server.
   <a href="https://github.com/mdn/samples-server/tree/master/s/webrtc-from-chat">
   Check out the source</a> on Github.</p>
+  <p class="disclaimer">This text and audio/video chat example is offered as-is
+    for demonstration purposes only, and should not be used for any other
+    purpose.</p>
+  <p>Click a username in the user list to ask them to enter a one-on-one video
+    chat with you.</p>
   <p>Enter a username: <input id="name" type="text" maxlength="12" required
       autocomplete="username" inputmode="verbatim" placeholder="Username">
   <input type="button" name="login" value="Log in" onclick="connect()"></p>
