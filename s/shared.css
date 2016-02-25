@@ -19,3 +19,11 @@
   border: 1px solid black;
   box-shadow: 1px 1px 2px black;
 }
+
+.mdn-footer {
+	font-weight:normal;
+	font-size:12px;
+	font-family:'Lucida Grande', Arial, Helvetica, sans-serif;
+	text-align:right;
+	border-top:2px solid #000000;
+}
