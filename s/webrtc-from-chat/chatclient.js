@@ -460,7 +460,7 @@ function hangUpCall() {
 
 function invite(evt) {
   log("Starting to prepare an invitation");
-  if (myPeerConnection !== null) {
+  if (myPeerConnection) {
     alert("You can't start a call because you already have one open!");
   } else {
     var clickedUsername = evt.target.textContent;
