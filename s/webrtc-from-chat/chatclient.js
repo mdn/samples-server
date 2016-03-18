@@ -100,7 +100,7 @@ function connect() {
 
   connection = new WebSocket(serverUrl, "json");
 
-  connection.onopen = function(event) {
+  connection.onopen = function(evt) {
     document.getElementById("text").disabled = false;
     document.getElementById("send").disabled = false;
   };
@@ -212,13 +212,13 @@ function createPeerConnection() {
   // STUN server.
 
   myPeerConnection = new RTCPeerConnection({
-      iceServers: [     // Information about ICE servers - Use your own!
-        {
-          urls: "turn:" + myHostname,  // A TURN server
-          username: "webrtc",
-          credential: "turnserver"
-        }
-      ]
+    iceServers: [     // Information about ICE servers - Use your own!
+      {
+        urls: "turn:" + myHostname,  // A TURN server
+        username: "webrtc",
+        credential: "turnserver"
+      }
+    ]
   });
 
   // Set up event handlers for the ICE negotiation process.
@@ -526,12 +526,9 @@ function handleVideoOfferMsg(msg) {
   })
   .then(function(stream) {
     log("-- Local video stream obtained");
-    localStream = stream;
-//  })
-//  .then(function() {
-    document.getElementById("local_video").src = window.URL.createObjectURL(localStream);
+    localStream = stream;    document.getElementById("local_video").src = window.URL.createObjectURL(localStream);
     document.getElementById("local_video").srcObject = localStream;
-      log("-- Calling myPeerConnection.addStream()");
+    log("-- Calling myPeerConnection.addStream()");
     return myPeerConnection.addStream(localStream);
   })
   .then(function() {
