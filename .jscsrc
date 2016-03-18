@@ -1,0 +1,26 @@
+{
+  "disallowMixedSpacesAndTabs": true,
+  "disallowNewlineBeforeBlockStatements": true,
+  "disallowSpaceBeforeComma": true,
+  "disallowSpaceBeforeSemicolon": true,
+  "disallowSpacesInsideParentheses": true,
+  "disallowTabs": true,
+  "disallowTrailingComma": true,
+  "disallowTrailingWhitespace": true,
+  "disallowYodaConditions": true,
+  "requireCurlyBraces": [
+    "if",
+    "else",
+    "for",
+    "while",
+    "do",
+    "catch"
+  ],
+  "requireLineFeedAtFileEnd": true,
+  "requireSemicolons": true,
+  "requireSpaceAfterComma": true,
+  "requireSpaceAfterLineComment": true,
+  "requireSpaceBeforeKeywords": true,
+  "validateIndentation": 2,
+  "validateQuoteMarks": { "mark": "\"", "escape": true }
+}
