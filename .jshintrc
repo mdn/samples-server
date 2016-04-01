@@ -22,7 +22,7 @@
   "quotmark": false,
   "typed": true,
   "unused": true,
-  "strict": global,
+  "strict": "global",
   "withstmt": true,
   "worker": false
 }
