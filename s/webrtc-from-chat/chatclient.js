@@ -224,7 +224,8 @@ function createPeerConnection() {
   // Set up event handlers for the ICE negotiation process.
 
   myPeerConnection.onicecandidate = handleICECandidateEvent;
-  myPeerConnection.onaddstream = handleAddStreamEvent;
+  myPeerConnection.ontrack = handleTrackEvent;
+  //myPeerConnection.onaddstream = handleAddStreamEvent;
   myPeerConnection.onnremovestream = handleRemoveStreamEvent;
   myPeerConnection.oniceconnectionstatechange = handleICEConnectionStateChangeEvent;
   myPeerConnection.onicegatheringstatechange = handleICEGatheringStateChangeEvent;
@@ -257,6 +258,23 @@ function handleNegotiationNeededEvent() {
     });
   })
   .catch(reportError);
+}
+
+// Called by the WebRTC layer when events occur on the media tracks
+// on our WebRTC call. This includes when streams are added to and
+// removed from the call.
+//
+// track events include the following fields:
+//
+// RTCRtpReceiver       receiver
+// MediaStreamTrack     track
+// MediaStream[]        streams
+// RTCRtpTransceiver    transceiver
+
+function handleTrackEvent(event) {
+  log("*** Track event");
+  document.getElementById("received_video").srcObject = event.streams[0];
+  document.getElementById("hangup-button").disabled = false;
 }
 
 // Called by the WebRTC layer when a stream starts arriving from the
@@ -301,9 +319,7 @@ function handleICECandidateEvent(event) {
 // Handle |iceconnectionstatechange| events. This will detect
 // when the ICE connection is closed, failed, or disconnected.
 //
-// Note that currently, the spec is hazy on exactly when this and other
-// "connection failure" scenarios should occur, so sometimes they simply
-// don't happen.
+// This is called when the state of the ICE agent changes.
 
 function handleICEConnectionStateChangeEvent(event) {
   log("*** ICE connection state changed to " + myPeerConnection.iceConnectionState);
@@ -320,9 +336,9 @@ function handleICEConnectionStateChangeEvent(event) {
 // Set up a |signalingstatechange| event handler. This will detect when
 // the signaling connection is closed.
 //
-// Note that currently, the spec is hazy on exactly when this and other
-// "connection failure" scenarios should occur, so sometimes they simply
-// don't happen.
+// NOTE: This will actually move to the new RTCPeerConnectionState enum
+// returned in the property RTCPeerConnection.connectionState when
+// browsers catch up with the latest version of the specification!
 
 function handleSignalingStateChangeEvent(event) {
   log("*** WebRTC signaling state changed to: " + myPeerConnection.signalingState);
@@ -394,7 +410,8 @@ function closeVideoCall() {
     // Disconnect all our event listeners; we don't want stray events
     // to interfere with the hangup while it's ongoing.
 
-    myPeerConnection.onaddstream = null;
+    //myPeerConnection.onaddstream = null; // XXX remove this line!!!
+    myPeerConnection.ontrack = null;
     myPeerConnection.onremovestream = null;
     myPeerConnection.onnicecandidate = null;
     myPeerConnection.oniceconnectionstatechange = null;
@@ -494,8 +511,9 @@ function invite(evt) {
       document.getElementById("local_video").src = window.URL.createObjectURL(localStream);
       document.getElementById("local_video").srcObject = localStream;
 
-      log("-- Calling myPeerConnection.addStream()");
-      myPeerConnection.addStream(localStream);
+      log("-- Adding tracks to the RTCPeerConnection");
+      localStream.getTracks().forEach(track => myPeerConnection.addTrack(track, localStream));
+//      myPeerConnection.addStream(localStream);
     })
     .catch(handleGetUserMediaError);
   }
@@ -526,10 +544,14 @@ function handleVideoOfferMsg(msg) {
   })
   .then(function(stream) {
     log("-- Local video stream obtained");
-    localStream = stream;    document.getElementById("local_video").src = window.URL.createObjectURL(localStream);
+    localStream = stream;
+    document.getElementById("local_video").src = window.URL.createObjectURL(localStream);
     document.getElementById("local_video").srcObject = localStream;
-    log("-- Calling myPeerConnection.addStream()");
-    return myPeerConnection.addStream(localStream);
+
+    log("-- Adding tracks to the RTCPeerConnection");
+    localStream.getTracks().forEach(track =>
+          myPeerConnection.addTrack(track, localStream)
+    );
   })
   .then(function() {
     log("------> Creating answer");
