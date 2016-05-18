@@ -27,6 +27,7 @@
 "use strict";
 
 var http = require('http');
+var https = require('https');
 var url = require('url');
 var fs = require('fs');
 var WebSocketServer = require('websocket').server;
@@ -41,7 +42,7 @@ var appendToMakeUnique = 1;
 
 function log(text) {
   var time = new Date();
-  
+
   console.log("[" + time.toLocaleTimeString() + "] " + text);
 }
 
@@ -133,50 +134,59 @@ function sendUserListToAll() {
   }
 }
 
-// Our HTTP server does nothing but service WebSocket
+// Load the key and certificate data to be used for our HTTPS/WSS
+// server.
+
+const options = {
+  key: fs.readFileSync("/etc/pki/tls/private/mdn.key"),
+  cert: fs.readFileSync("/etc/pki/tls/certs/mdn.crt")
+};
+
+// Our HTTPS server does nothing but service WebSocket
 // connections, so every request just returns 404. Real Web
 // requests are handled by the main server on the box. If you
 // want to, you can return real HTML here and serve Web content.
 
-var server = http.createServer(function(request, response) {
-    log(" Received request for " + request.url);
-    response.writeHead(404);
-    response.end();
+var httpsServer = https.createServer(httpsOptions, function(request, response) {
+  log("Received secure request for " + request.url);
+  response.writeHead(404);
+  response.end();
 });
 
-// Spin up the HTTP server on the port assigned to this sample.
+// Spin up the HTTPS server on the port assigned to this sample.
 // This will be turned into a WebSocket port very shortly.
 
-server.listen(6503, function() {
-    log("Server is listening on port 6503");
+httpsServer.listen(6503, function() {
+  log("Server is listening on port 6503");
 });
 
-// Create the WebSocket server by converting the HTTP server into one.
+// Create the WebSocket server by converting the HTTPS server into one.
 
 var wsServer = new WebSocketServer({
-    httpServer: server,
-    autoAcceptConnections: false
+  httpServer: httpsServer,
+  autoAcceptConnections: false
 });
 
 // Set up a "connect" message handler on our WebSocket server. This is
 // called whenever a user connects to the server's port using the
 // WebSocket protocol.
+
 wsServer.on('request', function(request) {
   if (!originIsAllowed(request.origin)) {
     request.reject();
     log("Connection from " + request.origin + " rejected.");
     return;
   }
-  
+
   // Accept the request and get a connection.
-  
+
   var connection = request.accept("json", request.origin);
-  
+
   // Add the new connection to our list of connections.
-  
+
   log("Connection accepted from " + connection.remoteAddress + ".");
   connectionArray.push(connection);
-  
+
   connection.clientID = nextID;
   nextID++;
 
@@ -216,7 +226,7 @@ wsServer.on('request', function(request) {
               msg.name = connect.username;
               msg.text = msg.text.replace(/(<([^>]+)>)/ig,"");
               break;
-            
+
             // Username change
             case "username":
               var nameChanged = false;
@@ -251,7 +261,7 @@ wsServer.on('request', function(request) {
               sendToClients = false;  // We already sent the proper responses
               break;
           }
-          
+
           // Convert the revised message back to JSON and send it out
           // to the specified client or all clients, as appropriate. We
           // pass through any messages not specifically handled
@@ -274,7 +284,7 @@ wsServer.on('request', function(request) {
           }
       }
   });
-  
+
   // Handle the WebSocket "close" event; this means a user has logged off
   // or has been disconnected.
   connection.on('close', function(reason, description) {
@@ -282,13 +292,13 @@ wsServer.on('request', function(request) {
     connectionArray = connectionArray.filter(function(el, idx, ar) {
       return el.connected;
     });
-    
+
     // Now send the updated user list. Again, please don't do this in a
     // real application. Your users won't like you very much.
     sendUserListToAll();
-    
+
     // Build and output log output for close information.
-    
+
     var logMessage = "Connection closed: " + connection.remoteAddress + " (" +
                      reason;
     if (description !== null && description.length !== 0) {

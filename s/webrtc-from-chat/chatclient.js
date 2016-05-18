@@ -43,6 +43,11 @@ var myUsername = null;
 var targetUsername = null;      // To store username of other peer
 var myPeerConnection = null;    // RTCPeerConnection
 
+// To work both with and without addTrack() we need to note
+// if it's available
+
+var hasAddTrack = false;
+
 // Output logging information to console.
 
 function log(text) {
@@ -221,16 +226,27 @@ function createPeerConnection() {
     ]
   });
 
+  // Do we have addTrack()? If not, we will use streams instead.
+
+  hasAddTrack = (myPeerConnection.addTrack !== null);
+
   // Set up event handlers for the ICE negotiation process.
 
   myPeerConnection.onicecandidate = handleICECandidateEvent;
-  myPeerConnection.ontrack = handleTrackEvent;
-  //myPeerConnection.onaddstream = handleAddStreamEvent;
   myPeerConnection.onnremovestream = handleRemoveStreamEvent;
   myPeerConnection.oniceconnectionstatechange = handleICEConnectionStateChangeEvent;
   myPeerConnection.onicegatheringstatechange = handleICEGatheringStateChangeEvent;
   myPeerConnection.onsignalingstatechange = handleSignalingStateChangeEvent;
   myPeerConnection.onnegotiationneeded = handleNegotiationNeededEvent;
+
+  // Because the deprecation of addStream() and the addstream event is recent,
+  // we need to use those if addTrack() and track aren't available.
+
+  if (hasAddTrack) {
+    myPeerConnection.ontrack = handleTrackEvent;
+  } else {
+    myPeerConnection.onaddstream = handleAddStreamEvent;
+  }
 }
 
 // Called by the WebRTC layer to let us know when it's time to
@@ -410,8 +426,8 @@ function closeVideoCall() {
     // Disconnect all our event listeners; we don't want stray events
     // to interfere with the hangup while it's ongoing.
 
-    //myPeerConnection.onaddstream = null; // XXX remove this line!!!
-    myPeerConnection.ontrack = null;
+    myPeerConnection.onaddstream = null;  // For older implementations
+    myPeerConnection.ontrack = null;      // For newer ones
     myPeerConnection.onremovestream = null;
     myPeerConnection.onnicecandidate = null;
     myPeerConnection.oniceconnectionstatechange = null;
@@ -511,9 +527,13 @@ function invite(evt) {
       document.getElementById("local_video").src = window.URL.createObjectURL(localStream);
       document.getElementById("local_video").srcObject = localStream;
 
-      log("-- Adding tracks to the RTCPeerConnection");
-      localStream.getTracks().forEach(track => myPeerConnection.addTrack(track, localStream));
-//      myPeerConnection.addStream(localStream);
+      if (hasAddTrack) {
+        log("-- Adding tracks to the RTCPeerConnection");
+        localStream.getTracks().forEach(track => myPeerConnection.addTrack(track, localStream));
+      } else {
+        log("-- Adding stream to the RTCPeerConnection")
+        myPeerConnection.addStream(localStream);
+      }
     })
     .catch(handleGetUserMediaError);
   }
@@ -548,10 +568,15 @@ function handleVideoOfferMsg(msg) {
     document.getElementById("local_video").src = window.URL.createObjectURL(localStream);
     document.getElementById("local_video").srcObject = localStream;
 
-    log("-- Adding tracks to the RTCPeerConnection");
-    localStream.getTracks().forEach(track =>
-          myPeerConnection.addTrack(track, localStream)
-    );
+    if (hasAddTrack) {
+      log("-- Adding tracks to the RTCPeerConnection");
+      localStream.getTracks().forEach(track =>
+            myPeerConnection.addTrack(track, localStream)
+      );
+    } else {
+      log("-- Adding stream to the RTCPeerConnection");
+      myPeerConnection.addStream(localStream);
+    }
   })
   .then(function() {
     log("------> Creating answer");
