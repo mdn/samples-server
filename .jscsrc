@@ -19,8 +19,6 @@
   "requireLineFeedAtFileEnd": true,
   "requireSemicolons": true,
   "requireSpaceAfterComma": true,
-  "requireSpaceAfterLineComment": true,
   "requireSpaceBeforeKeywords": true,
-  "validateIndentation": 2,
-  "validateQuoteMarks": { "mark": "\"", "escape": true }
+  "validateIndentation": 2
 }
