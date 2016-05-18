@@ -1,8 +1,21 @@
 {
   "name": "webrtc-from-chat",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "A simple WebSocket-based chat server with two-way video chat support added",
+  "homepage": "http://mdn-samples.mozilla.org/s/webrtc-from-chat/",
+  "bugs": "https://github.com/mdn/samples-server/issues",
+  "license": "CC0",
+  "author": "Eric Shepherd / Mozilla",
+  "main": "chatserver.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mdn/samples-server.git"
+  },
+  "scripts": {
+    "postinstall": "cp node_modules/webrtc-adapter/adapter.js ."
+  },
   "dependencies": {
-    "websocket": "*"
+    "websocket": "*",
+    "webrtc-adapter": "^1.1"
   }
 }
