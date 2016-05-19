@@ -228,7 +228,7 @@ function createPeerConnection() {
 
   // Do we have addTrack()? If not, we will use streams instead.
 
-  hasAddTrack = (myPeerConnection.addTrack !== null);
+  hasAddTrack = (myPeerConnection.addTrack !== undefined);
 
   // Set up event handlers for the ICE negotiation process.
 
