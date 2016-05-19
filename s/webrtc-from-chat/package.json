@@ -12,7 +12,7 @@
     "url": "https://github.com/mdn/samples-server.git"
   },
   "scripts": {
-    "postinstall": "cp node_modules/webrtc-adapter/adapter.js ."
+    "postinstall": "cp node_modules/webrtc-adapter/out/adapter.js ."
   },
   "dependencies": {
     "websocket": "*",
