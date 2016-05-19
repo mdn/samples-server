@@ -13,7 +13,7 @@
   "jquery": false,
   "latedef": true,
   "noarg": true,
-  "node": false,
+  "node": true,
   "nonbsp": true,
   "nonew": true,
   "nonstandard": false,
