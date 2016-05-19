@@ -13,4 +13,8 @@
 # http://creativecommons.org/publicdomain/zero/1.0/
 
 npm install websocket
+
+npm install webrtc-adapter
+cp node_modules/webrtc-adapter/out/adapter.js .
+
 node chatserver.js
