@@ -531,7 +531,7 @@ function invite(evt) {
         log("-- Adding tracks to the RTCPeerConnection");
         localStream.getTracks().forEach(track => myPeerConnection.addTrack(track, localStream));
       } else {
-        log("-- Adding stream to the RTCPeerConnection")
+        log("-- Adding stream to the RTCPeerConnection");
         myPeerConnection.addStream(localStream);
       }
     })
