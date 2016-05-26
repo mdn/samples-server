@@ -56,6 +56,10 @@ find /var/www -type d -exec chmod 2775 {} +
 
 find /var/www -type f -exec chmod 0664 {} +
 
+# Ensure that overrides are allowed in htaccess Files
+
+sed -i.previous '/<Directory \"\/var\/www\/html\">/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/httpd/conf/httpd.conf
+
 # Make sure the web server is running
 
 echo "Starting HTTP server..."
