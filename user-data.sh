@@ -36,6 +36,11 @@ usermod -a -G www ec2-user
 
 git clone https://github.com/mdn/samples-server /var/www/html
 
+# Allow only root to access the .git directory - DISABLED
+# WHILE TRYING HTACCESS INSTEAD.
+
+# chmod og-rwx /var/www/html/.git
+
 # Pull the main startup script from github
 
 curl https://raw.githubusercontent.com/mdn/samples-server/master/update.sh > /var/lib/cloud/scripts/per-boot/update.sh
