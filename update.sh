@@ -56,14 +56,17 @@ find /var/www -type d -exec chmod 2775 {} +
 
 find /var/www -type f -exec chmod 0664 {} +
 
-# Ensure that overrides are allowed in htaccess Files
+# Disable indexes and make attempts to open anything starting with ".git"
+# result in a 404 "Not Found" error.
 
-sed -i.previous '/<Directory \"\/var\/www\/html\">/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/httpd/conf/httpd.conf
+sed -i.previous -e '/<Directory \"\/var\/www\/html\">/,/<\/Directory>/ s/Options Indexes FollowSymLinks/Options -Indexes +FollowSymLinks/' -e '/<Directory \"\/var\/www\/html\">/,/<\/Directory>/ s/AllowOverride None/AllowOverride All\
+    RedirectMatch 404 \/\\.git/' /etc/httpd/conf/httpd.conf
 
-# Make sure the web server is running
+# Make sure the web server is running; restart it if it already is, to ensure
+# that it picks up configuration changes we've applied.
 
-echo "Starting HTTP server..."
-systemctl start  httpd.service
+echo "Starting (or restarting) HTTP server..."
+systemctl restart httpd.service
 systemctl enable httpd.service
 
 # Build, install, and start the turn server
