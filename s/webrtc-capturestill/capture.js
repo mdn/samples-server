@@ -25,7 +25,8 @@
     photo = document.getElementById('photo');
     startbutton = document.getElementById('startbutton');
 
-    navigator.getMedia = ( navigator.getUserMedia ||
+    navigator.getMedia = ( navigator.mediaDevices.getUserMedia ||
+                           navigator.getUserMedia ||
                            navigator.webkitGetUserMedia ||
                            navigator.mozGetUserMedia ||
                            navigator.msGetUserMedia);
