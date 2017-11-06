@@ -26,8 +26,7 @@
 
 "use strict";
 
-//var http = require('http');
-var https = require('https');
+var http = require('http');
 var url = require('url');
 var fs = require('fs');
 var WebSocketServer = require('websocket').server;
@@ -134,36 +133,21 @@ function sendUserListToAll() {
   }
 }
 
-// Load the key and certificate data to be used for our HTTPS/WSS
-// server.
+// Our HTTP server does nothing but service WebSocket
+// connections. Real Web requests are handled elsewhere.
+var httpServer = http.createServer(function(request, response) {});
 
-var httpsOptions = {
-  key: fs.readFileSync("/etc/pki/tls/private/mdn.key"),
-  cert: fs.readFileSync("/etc/pki/tls/certs/mdn.crt")
-};
-
-// Our HTTPS server does nothing but service WebSocket
-// connections, so every request just returns 404. Real Web
-// requests are handled by the main server on the box. If you
-// want to, you can return real HTML here and serve Web content.
-
-var httpsServer = https.createServer(httpsOptions, function(request, response) {
-  log("Received secure request for " + request.url);
-  response.writeHead(404);
-  response.end();
-});
-
-// Spin up the HTTPS server on the port assigned to this sample.
+// Spin up the HTTP server on the port assigned to this sample.
 // This will be turned into a WebSocket port very shortly.
 
-httpsServer.listen(6503, function() {
+httpServer.listen(6503, function() {
   log("Server is listening on port 6503");
 });
 
-// Create the WebSocket server by converting the HTTPS server into one.
+// Create the WebSocket server by converting the HTTP server into one.
 
 var wsServer = new WebSocketServer({
-  httpServer: httpsServer,
+  httpServer: httpServer,
   autoAcceptConnections: false
 });
 
