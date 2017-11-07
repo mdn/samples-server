@@ -8,6 +8,7 @@ WEBRTC_IMAGE_NAME ?= mdn-samples-webrtc
 WEBRTC_IMAGE ?= ${REGISTRY}${IMAGE_PREFIX}/${WEBRTC_IMAGE_NAME}\:${VERSION}
 WEBSOCKET_IMAGE_NAME ?= mdn-samples-websocket
 WEBSOCKET_IMAGE ?= ${REGISTRY}${IMAGE_PREFIX}/${WEBSOCKET_IMAGE_NAME}\:${VERSION}
+NAMESPACE ?= mdn-samples
 
 build:
 	docker build -t ${NGINX_IMAGE} .
@@ -18,3 +19,6 @@ push:
 	docker push ${NGINX_IMAGE}
 	docker push ${WEBRTC_IMAGE}
 	docker push ${WEBSOCKET_IMAGE}
+
+deploy:
+	kubectl -n ${NAMESPACE} apply -f k8s
