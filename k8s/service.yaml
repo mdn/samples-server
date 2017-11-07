@@ -1,0 +1,28 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: mdn-samples-service
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: arn:aws:acm:us-west-2:236517346949:certificate/921dce45-4537-4c2c-b4e4-0cc475e592ed
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443,6503"
+spec:
+  type: LoadBalancer
+  selector:
+    app: mdn-samples
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP
+    - name: https
+      port: 443
+      targetPort: 80
+      protocol: TCP
+    - name: websocket
+      port: 6502
+      targetPort: 6502
+      protocol: TCP
+    - name: webrtc
+      port: 6503
+      targetPort: 6503
+      protocol: TCP

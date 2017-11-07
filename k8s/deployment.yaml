@@ -1,0 +1,27 @@
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: mdn-samples
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mdn-samples
+    spec:
+      containers:
+        - name: mdn-samples-nginx
+          image: "quay.io/mozmar/mdn-samples-nginx:7d0a41c"
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+        - name: mdn-samples-webrtc
+          image: "quay.io/mozmar/mdn-samples-webrtc:7d0a41c"
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 6503
+        - name: mdn-samples-websocket
+          image: "quay.io/mozmar/mdn-samples-websocket:7d0a41c"
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 6502
