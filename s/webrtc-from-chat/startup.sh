@@ -15,6 +15,6 @@
 npm install websocket
 
 npm install webrtc-adapter
-cp node_modules/webrtc-adapter/out/adapter.js .
+cp node_modules/webrtc-adapter/out/adapter.js public/adapter.js
 
 node chatserver.js
