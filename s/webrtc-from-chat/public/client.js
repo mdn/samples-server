@@ -11,10 +11,11 @@
 
 "use strict";
 
-// Get our hostname
+// Get the hostname of the server; this will be used to open a
+// connection to the WebSocket server later.
 
 var myHostname = window.location.hostname;
-console.log("Hostname: " + myHostname);
+console.log("Server hostname: " + myHostname);
 
 // WebSocket chat/signaling channel variables.
 
@@ -42,11 +43,6 @@ var mediaConstraints = {
 var myUsername = null;
 var targetUsername = null;      // To store username of other peer
 var myPeerConnection = null;    // RTCPeerConnection
-
-// To work both with and without addTrack() we need to note
-// if it's available
-
-var hasAddTrack = false;
 
 // Output logging information to console.
 
@@ -96,22 +92,35 @@ function connect() {
   var scheme = "ws";
 
   // If this is an HTTPS connection, we have to use a secure WebSocket
-  // connection too, so add another "s" to the scheme.
-
+  // connection too, so add another "s" to the scheme. 
+  
   if (document.location.protocol === "https:") {
     scheme += "s";
   }
-  serverUrl = scheme + "://" + myHostname + ":6503";
+  
+  // Build the URL of the WebSocket server; in this case, it's the same
+  // as the web server. Be sure to add ":<port number>" if the WebSocket
+  // service is on a different port.
+  
+  serverUrl = scheme + "://" + myHostname;
+  
+  // Connect to the WebSocket server, using the "json" protocol.
 
   connection = new WebSocket(serverUrl, "json");
 
+  // Handle the WebSocket "open" message; this occurs when the WebSocket
+  // connection is successfully opened.
+  
   connection.onopen = function(evt) {
     document.getElementById("text").disabled = false;
     document.getElementById("send").disabled = false;
   };
 
+  // Handle the "message" WebSocket event. This occurs when the
+  // chat/signaling server sends a JSON message to the client.
+  
   connection.onmessage = function(evt) {
-    var chatFrameDocument = document.getElementById("chatbox").contentDocument;
+    var chatBox = document.querySelector(".chatbox");
     var text = "";
     var msg = JSON.parse(evt.data);
     log("Message received: ");
@@ -119,28 +128,47 @@ function connect() {
     var time = new Date(msg.date);
     var timeStr = time.toLocaleTimeString();
 
+    // Handle the received JSON messages.
+    
     switch(msg.type) {
+      
+      // The "id" message is sent immediately after connecting, to tell
+      // the client what it's unique ID number is. We respond by sending
+      // our proposed username to the server.
+      
       case "id":
         clientID = msg.id;
         setUsername();
         break;
+      
+      // The "username" message is sent to indicate that a user has
+      // logged in.
 
       case "username":
         text = "<b>User <em>" + msg.name + "</em> signed in at " + timeStr + "</b><br>";
         break;
 
-      case "message":
-        text = "(" + timeStr + ") <b>" + msg.name + "</b>: " + msg.text + "<br>";
-        break;
-
+      // The "rejectusername" message is sent if the user name we
+      // propose in response to the "id" message is already taken.
+      
       case "rejectusername":
         myUsername = msg.name;
         text = "<b>Your username has been set to <em>" + myUsername +
           "</em> because the name you chose is in use.</b><br>";
         break;
 
+      // The "userlist" message is sent to update the list of users
+      // displayed in our sidebar.
+      
       case "userlist":      // Received an updated user list
         handleUserlistMsg(msg);
+        break;
+      
+      // The "message" message contains a message posted by one of the
+      // connected users (including potentially ourselves).
+
+      case "message":
+        text = "(" + timeStr + ") <b>" + msg.name + "</b>: " + msg.text + "<br>";
         break;
 
       // Signaling messages: these messages are used to trade WebRTC
@@ -174,14 +202,15 @@ function connect() {
     // scroll the chat panel so that the new text is visible.
 
     if (text.length) {
-      chatFrameDocument.write(text);
-      document.getElementById("chatbox").contentWindow.scrollByPages(1);
+      chatBox.innerHTML += text;
+      chatBox.scrollTop = chatBox.scrollHeight - chatBox.clientHeight;
     }
   };
 }
 
 // Handles a click on the Send button (or pressing return/enter) by
 // building a "message" object and sending it to the server.
+
 function handleSendButton() {
   var msg = {
     text: document.getElementById("text").value,
@@ -196,6 +225,7 @@ function handleSendButton() {
 // Handler for keyboard events. This is used to intercept the return and
 // enter keys so that we can call send() to transmit the entered text
 // to the server.
+
 function handleKey(evt) {
   if (evt.keyCode === 13 || evt.keyCode === 14) {
     if (!document.getElementById("send").disabled) {
@@ -219,34 +249,20 @@ function createPeerConnection() {
   myPeerConnection = new RTCPeerConnection({
     iceServers: [     // Information about ICE servers - Use your own!
       {
-        urls: "turn:" + myHostname,  // A TURN server
-        username: "webrtc",
-        credential: "turnserver"
+        urls: "stun:stun.stunprotocol.org"
       }
     ]
   });
 
-  // Do we have addTrack()? If not, we will use streams instead.
-
-  hasAddTrack = (myPeerConnection.addTrack !== undefined);
-
   // Set up event handlers for the ICE negotiation process.
 
   myPeerConnection.onicecandidate = handleICECandidateEvent;
-  myPeerConnection.onnremovestream = handleRemoveStreamEvent;
+  myPeerConnection.ontrack = handleTrackEvent;
+  myPeerConnection.onremovetrack = handleRemoveTrackEvent;
   myPeerConnection.oniceconnectionstatechange = handleICEConnectionStateChangeEvent;
   myPeerConnection.onicegatheringstatechange = handleICEGatheringStateChangeEvent;
   myPeerConnection.onsignalingstatechange = handleSignalingStateChangeEvent;
   myPeerConnection.onnegotiationneeded = handleNegotiationNeededEvent;
-
-  // Because the deprecation of addStream() and the addstream event is recent,
-  // we need to use those if addTrack() and track aren't available.
-
-  if (hasAddTrack) {
-    myPeerConnection.ontrack = handleTrackEvent;
-  } else {
-    myPeerConnection.onaddstream = handleAddStreamEvent;
-  }
 }
 
 // Called by the WebRTC layer to let us know when it's time to
@@ -276,9 +292,7 @@ function handleNegotiationNeededEvent() {
   .catch(reportError);
 }
 
-// Called by the WebRTC layer when events occur on the media tracks
-// on our WebRTC call. This includes when streams are added to and
-// removed from the call.
+// Called by the WebRTC layer when tracks are added to the connection.
 //
 // track events include the following fields:
 //
@@ -293,27 +307,25 @@ function handleTrackEvent(event) {
   document.getElementById("hangup-button").disabled = false;
 }
 
-// Called by the WebRTC layer when a stream starts arriving from the
-// remote peer. We use this to update our user interface, in this
-// example.
-
-function handleAddStreamEvent(event) {
-  log("*** Stream added");
-  document.getElementById("received_video").srcObject = event.stream;
-  document.getElementById("hangup-button").disabled = false;
-}
-
-// An event handler which is called when the remote end of the connection
-// removes its stream. We consider this the same as hanging up the call.
-// It could just as well be treated as a "mute".
+// Handler for the |removetrack| event; this event is is received
+// by the RTCPeerConnection whenever a track is removed from the
+// connection's media stream.
 //
-// Note that currently, the spec is hazy on exactly when this and other
-// "connection failure" scenarios should occur, so sometimes they simply
-// don't happen.
+// We test to determine if the track removed was the only track left,
+// and if so, we close the connection.
 
-function handleRemoveStreamEvent(event) {
-  log("*** Stream removed");
-  closeVideoCall();
+function handleRemoveTrackEvent(event) {
+  var stream = document.getElementById("received_video").srcObject;
+  var trackList = stream.getTracks();
+  
+  var track = event.track;
+  var kind = track.kind.charAt(0).toUpperCase() + track.kind.slice(1);
+  log(track.kind + " track removed from incoming stream: " + track.label);
+  
+  if (trackList.length == 0) {
+    log("*** All tracks removed; closing connection");
+    closeVideoCall();
+  }
 }
 
 // Handles |icecandidate| events by forwarding the specified
@@ -385,8 +397,7 @@ function handleICEGatheringStateChangeEvent(event) {
 
 function handleUserlistMsg(msg) {
   var i;
-
-  var listElem = document.getElementById("userlistbox");
+  var listElem = document.querySelector(".userlistbox");
 
   // Remove all current list members. We could do this smarter,
   // by adding and updating users instead of rebuilding from
@@ -396,15 +407,15 @@ function handleUserlistMsg(msg) {
     listElem.removeChild(listElem.firstChild);
   }
 
-  // Add member names from the received list
+  // Add member names from the received list.
 
-  for (i=0; i < msg.users.length; i++) {
+  msg.users.forEach(function(username) {
     var item = document.createElement("li");
-    item.appendChild(document.createTextNode(msg.users[i]));
+    item.appendChild(document.createTextNode(username));
     item.addEventListener("click", invite, false);
 
     listElem.appendChild(item);
-  }
+  });
 }
 
 // Close the RTCPeerConnection and reset variables so that the user can
@@ -426,16 +437,16 @@ function closeVideoCall() {
     // Disconnect all our event listeners; we don't want stray events
     // to interfere with the hangup while it's ongoing.
 
-    myPeerConnection.onaddstream = null;  // For older implementations
-    myPeerConnection.ontrack = null;      // For newer ones
-    myPeerConnection.onremovestream = null;
+    myPeerConnection.ontrack = null;
+    myPeerConnection.onremovetrack = null;
     myPeerConnection.onnicecandidate = null;
     myPeerConnection.oniceconnectionstatechange = null;
     myPeerConnection.onsignalingstatechange = null;
     myPeerConnection.onicegatheringstatechange = null;
     myPeerConnection.onnotificationneeded = null;
 
-    // Stop the videos
+    // Stop the videos by iterating over their tracks, stopping each
+    // one by one.
 
     if (remoteVideo.srcObject) {
       remoteVideo.srcObject.getTracks().forEach(track => track.stop());
@@ -445,14 +456,18 @@ function closeVideoCall() {
       localVideo.srcObject.getTracks().forEach(track => track.stop());
     }
 
-    remoteVideo.src = null;
-    localVideo.src = null;
-
     // Close the peer connection
 
     myPeerConnection.close();
     myPeerConnection = null;
   }
+  
+  // Detach the streams from the video elements.
+  
+  remoteVideo.removeAttribute("src");
+  remoteVideo.removeAttribute("srcObject");
+  localVideo.removeAttribute("src");
+  localVideo.removeAttribute("srcObject");
 
   // Disable the hangup button
 
@@ -487,7 +502,7 @@ function hangUpCall() {
 
 // Handle a click on an item in the user list by inviting the clicked
 // user to video chat. Note that we don't actually send a message to
-// the callee here -- calling RTCPeerConnection.addStream() issues
+// the callee here -- adding tracks to the connection triggers a
 // a |notificationneeded| event, so we'll let our handler for that
 // make the offer.
 
@@ -524,16 +539,10 @@ function invite(evt) {
     navigator.mediaDevices.getUserMedia(mediaConstraints)
     .then(function(localStream) {
       log("-- Local video stream obtained");
-      document.getElementById("local_video").src = window.URL.createObjectURL(localStream);
       document.getElementById("local_video").srcObject = localStream;
 
-      if (hasAddTrack) {
-        log("-- Adding tracks to the RTCPeerConnection");
-        localStream.getTracks().forEach(track => myPeerConnection.addTrack(track, localStream));
-      } else {
-        log("-- Adding stream to the RTCPeerConnection");
-        myPeerConnection.addStream(localStream);
-      }
+      log("-- Adding incoming tracks to the RTCPeerConnection");
+      localStream.getTracks().forEach(track => myPeerConnection.addTrack(track, localStream));
     })
     .catch(handleGetUserMediaError);
   }
@@ -565,18 +574,10 @@ function handleVideoOfferMsg(msg) {
   .then(function(stream) {
     log("-- Local video stream obtained");
     localStream = stream;
-    document.getElementById("local_video").src = window.URL.createObjectURL(localStream);
     document.getElementById("local_video").srcObject = localStream;
 
-    if (hasAddTrack) {
-      log("-- Adding tracks to the RTCPeerConnection");
-      localStream.getTracks().forEach(track =>
-            myPeerConnection.addTrack(track, localStream)
-      );
-    } else {
-      log("-- Adding stream to the RTCPeerConnection");
-      myPeerConnection.addStream(localStream);
-    }
+    log("-- Adding outgoing tracks to the RTCPeerConnection");
+    localStream.getTracks().forEach(track => myPeerConnection.addTrack(track, localStream));
   })
   .then(function() {
     log("------> Creating answer");
