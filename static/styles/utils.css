@@ -1,0 +1,14 @@
+@charset "UTF-8";
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
+
+.d-block { display: block !important; }
+.d-contents { display: contents !important; }
+.d-flex { display: flex !important; }
+.d-grid { display: grid !important; }
+.d-inline { display: inline !important; }
+.d-inline-block { display: inline-block !important; }
+.d-inline-flex { display: inline-flex !important; }
+.d-inline-grid { display: inline-grid !important; }
+.d-list-item { display: list-item !important; }
+.d-none { display: none !important; }
