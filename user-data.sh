@@ -21,6 +21,7 @@
 # Install packages needed for Web server support
 
 yum groupinstall -y "Web Server" "PHP Support"
+curl -sL https://rpm.nodesource.com/setup_10.x | sudo bash -
 yum install -y nodejs
 yum install -y npm
 yum install -y openssl-devel
