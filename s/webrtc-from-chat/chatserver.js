@@ -138,8 +138,8 @@ function sendUserListToAll() {
 // server.
 
 var httpsOptions = {
-  key: fs.readFileSync("/etc/pki/tls/private/mdn.key"),
-  cert: fs.readFileSync("/etc/pki/tls/certs/mdn.crt")
+  key: fs.readFileSync("/etc/pki/tls/private/mdn-samples.mozilla.org.key"),
+  cert: fs.readFileSync("/etc/pki/tls/certs/mdn-samples.mozilla.org.crt")
 };
 
 // Our HTTPS server does nothing but service WebSocket
@@ -166,6 +166,10 @@ var wsServer = new WebSocketServer({
   httpServer: httpsServer,
   autoAcceptConnections: false
 });
+
+if (!wsServer) {
+  log("ERROR: Unable to create WbeSocket server!");
+}
 
 // Set up a "connect" message handler on our WebSocket server. This is
 // called whenever a user connects to the server's port using the

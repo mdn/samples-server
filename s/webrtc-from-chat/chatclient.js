@@ -110,6 +110,10 @@ function connect() {
     document.getElementById("send").disabled = false;
   };
 
+  connection.onerror = function(evt) {
+    console.dir(evt);
+  }
+
   connection.onmessage = function(evt) {
     var chatFrameDocument = document.getElementById("chatbox").contentDocument;
     var text = "";
