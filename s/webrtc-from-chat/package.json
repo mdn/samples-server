@@ -15,7 +15,7 @@
     "postinstall": "cp node_modules/webrtc-adapter/out/adapter.js ."
   },
   "dependencies": {
-    "websocket": "*",
-    "webrtc-adapter": "^1.1"
+    "webrtc-adapter": "^1.4.0",
+    "websocket": "^1.0.28"
   }
 }
