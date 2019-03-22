@@ -2,9 +2,8 @@
 var connection = null;
 var clientID = 0;
 
-var WebSocket = WebSocket || MozWebSocket;
-
 function setUsername() {
+  console.log("***SETUSERNAME");
   var msg = {
     name: document.getElementById("name").value,
     date: Date.now(),
@@ -15,19 +14,35 @@ function setUsername() {
 }
 
 function connect() {
-  var serverUrl = "ws://" + window.location.hostname + ":6502";
+  var serverUrl;
+  var scheme = "ws";
 
-  connection = new WebSocket(serverUrl);
+  // If this is an HTTPS connection, we have to use a secure WebSocket
+  // connection too, so add another "s" to the scheme.
+
+  if (document.location.protocol === "https:") {
+    scheme += "s";
+  }
+
+  serverUrl = scheme + "://" + document.location.hostname + ":6502";
+
+  connection = new WebSocket(serverUrl, "json");
+  console.log("***CREATED WEBSOCKET");
 
   connection.onopen = function(evt) {
+    console.log("***ONOPEN");
     document.getElementById("text").disabled = false;
     document.getElementById("send").disabled = false;
   };
+  console.log("***CREATED ONOPEN");
 
   connection.onmessage = function(evt) {
+    console.log("***ONMESSAGE");
     var f = document.getElementById("chatbox").contentDocument;
     var text = "";
     var msg = JSON.parse(evt.data);
+    console.log("Message received: ");
+    console.dir(msg);
     var time = new Date(msg.date);
     var timeStr = time.toLocaleTimeString();
 
@@ -61,9 +76,11 @@ function connect() {
       document.getElementById("chatbox").contentWindow.scrollByPages(1);
     }
   };
+  console.log("***CREATED ONMESSAGE");
 }
 
 function send() {
+  console.log("***SEND");
   var msg = {
     text: document.getElementById("text").value,
     type: "message",

@@ -28,7 +28,6 @@
 
 //var http = require('http');
 var https = require('https');
-var url = require('url');
 var fs = require('fs');
 var WebSocketServer = require('websocket').server;
 
@@ -138,8 +137,8 @@ function sendUserListToAll() {
 // server.
 
 var httpsOptions = {
-  key: fs.readFileSync("/etc/pki/tls/private/mdn.key"),
-  cert: fs.readFileSync("/etc/pki/tls/certs/mdn.crt")
+  key: fs.readFileSync("/etc/pki/tls/private/mdn-samples.mozilla.org.key"),
+  cert: fs.readFileSync("/etc/pki/tls/certs/mdn-samples.mozilla.org.crt")
 };
 
 // Our HTTPS server does nothing but service WebSocket
