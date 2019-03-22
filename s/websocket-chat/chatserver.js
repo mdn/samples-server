@@ -9,8 +9,7 @@
 
 "use strict";
 
-var http = require('http');
-var url = require('url');
+var https = require('https');
 var fs = require('fs');
 var WebSocketServer = require('websocket').server;
 
@@ -18,22 +17,37 @@ var connectionArray = [];
 var nextID = Date.now();
 var appendToMakeUnique = 1;
 
-var server = http.createServer(function(request, response) {
+// Load the key and certificate data to be used for our HTTPS/WSS
+// server.
+
+var httpsOptions = {
+  key: fs.readFileSync("/etc/pki/tls/private/mdn-samples.mozilla.org.key"),
+  cert: fs.readFileSync("/etc/pki/tls/certs/mdn-samples.mozilla.org.crt")
+};
+
+// Our HTTPS server does nothing but service WebSocket
+// connections, so every request just returns 404. Real Web
+// requests are handled by the main server on the box. If you
+// want to, you can return real HTML here and serve Web content.
+
+var httpsServer = https.createServer(httpsOptions, function(request, response) {
     console.log((new Date()) + " Received request for " + request.url);
     response.writeHead(404);
     response.end();
 });
 
-server.listen(6502, function() {
+httpsServer.listen(6502, function() {
     console.log((new Date()) + " Server is listening on port 6502");
 });
 
 // Create the WebSocket server
 
+console.log("***CREATING WEBSOCKET SERVER");
 var wsServer = new WebSocketServer({
-    httpServer: server,
-    autoAcceptConnections: true // You should use false here!
+    httpServer: httpsServer,
+    autoAcceptConnections: false
 });
+console.log("***CREATED");
 
 function originIsAllowed(origin) {
   // This is where you put code to ensure the connection should
@@ -94,13 +108,21 @@ function sendUserListToAll() {
   }
 }
 
-wsServer.on('connect', function(connection) {
-//  if (!originIsAllowed(connection.origin)) {
-//    request.reject();
-//    console.log((new Date()) + "Connection from " + connection.origin + " rejected.");
-//    return;
-//  }
+console.log("***CRETING REQUEST HANDLER");
+wsServer.on('request', function(request) {
+  console.log("Handling request from " + request.origin);
+  if (!originIsAllowed(request.origin)) {
+    request.reject();
+    console.log("Connection from " + request.origin + " rejected.");
+    return;
+  }
   
+  // Accept the request and get a connection.
+
+  var connection = request.accept("json", request.origin);
+
+  // Add the new connection to our list of connections.
+
   console.log((new Date()) + " Connection accepted.");
   connectionArray.push(connection);
 
@@ -121,6 +143,7 @@ wsServer.on('connect', function(connection) {
   // other users or a command to the server.
 
   connection.on('message', function(message) {
+      console.log("***MESSAGE");
       if (message.type === 'utf8') {
           console.log("Received Message: " + message.utf8Data);
 
@@ -130,21 +153,32 @@ wsServer.on('connect', function(connection) {
           msg = JSON.parse(message.utf8Data);
           var connect = getConnectionForID(msg.id);
 
+          // Look at the received message type and
+          // handle it appropriately.
+
           switch(msg.type) {
+            // Public text message in the chat room
             case "message":
               msg.name = connect.username;
               msg.text = msg.text.replace(/(<([^>]+)>)/ig,"");
               break;
+
+            // Username change request
             case "username":
               var nameChanged = false;
               var origName = msg.name;
 
+              // Force a unique username by appending
+              // increasing digits until it's unique.
               while (!isUsernameUnique(msg.name)) {
                 msg.name = origName + appendToMakeUnique;
                 appendToMakeUnique++;
                 nameChanged = true;
               }
 
+              // If the name had to be changed, reject the
+              // original username and let the other user
+              // know their revised name.
               if (nameChanged) {
                 var changeMsg = {
                   id: msg.id,
@@ -184,3 +218,4 @@ wsServer.on('connect', function(connection) {
     console.log((new Date()) + " Peer " + connection.remoteAddress + " disconnected.");
   });
 });
+console.log("***REQUEST HANDLER CREATED");
