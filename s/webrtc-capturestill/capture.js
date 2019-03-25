@@ -31,7 +31,7 @@
       video.play();
     })
     .catch(function(err) {
-      console.log("An error occured: " + err);
+      console.log("An error occurred: " + err);
     });
 
     video.addEventListener('canplay', function(ev){
