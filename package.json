@@ -1,0 +1,26 @@
+{
+  "name": "samples-server",
+  "version": "1.1.0",
+  "description": "Front end and menu for the MDN Web Docs sample server; used for special examples requiring back-end support",
+  "main": "index.js",
+  "homepage": "http://mdn-samples.mozilla.org/",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "mdn",
+    "mozilla",
+    "samples"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mdn/samples-server.git"
+  },
+  "author": "Eric Shepherd / Mozilla",
+  "bugs": "https://github.com/mdn/samples-server/issues",
+  "license": "CC0-1.0",
+  "dependencies": {
+    "escape-html": "^1.0.3",
+    "express": "^4.16.4"
+  }
+}

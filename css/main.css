@@ -1,0 +1,57 @@
+body {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 16px;
+}
+
+a {
+	text-decoration: none;
+}
+
+.page-wrapper {
+	margin: 0 auto;
+	width: 55em;
+	background-color: #ebf6fd;
+	padding: 0.2em 0.7em 0.7em;
+}
+
+.mdn-header {
+	width: 100%;
+	height: 34px;
+	padding-bottom: 2px;
+	border-bottom: 2px solid #000000;
+}
+
+.mdn-header h1 {
+	font-weight: bold;
+	font-size: 28px;
+	font-family: Arial, Helvetica, sans-serif;
+}
+
+.mdn-footer {
+	font-weight: normal;
+	font-size: 14px;
+	font-family: Arial, Helvetica, sans-serif;
+	text-align: right;
+	border-top: 2px solid #000000;
+}
+
+.mdn-filelist {
+	
+}
+
+.mdn-filelist dt {
+	font-size: 18px;
+	font-weight: bold;
+}
+
+.mdn-filelist dt::before {
+	content: "✸ ";
+}
+
+.mdn-filelist dt a {
+	text-decoration-line: none;
+}
+
+.mdn-filelist dd {
+	padding-bottom: 0.75em;
+}
