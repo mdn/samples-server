@@ -26,10 +26,16 @@
 
 "use strict";
 
-//var http = require('http');
+var http = require('http');
 var https = require('https');
 var fs = require('fs');
 var WebSocketServer = require('websocket').server;
+
+// Pathnames of the SSL key and certificate files to use for
+// HTTPS connections.
+
+const keyFilePath = "/etc/pki/tls/private/mdn-samples.mozilla.org.key";
+const certFilePath = "/etc/pki/tls/certs/mdn-samples.mozilla.org.crt";
 
 // Used for managing the text chat user list.
 
@@ -133,36 +139,73 @@ function sendUserListToAll() {
   }
 }
 
-// Load the key and certificate data to be used for our HTTPS/WSS
-// server.
+
+// Try to load the key and certificate files for SSL so we can
+// do HTTPS (required for non-local WebRTC).
 
 var httpsOptions = {
-  key: fs.readFileSync("/etc/pki/tls/private/mdn-samples.mozilla.org.key"),
-  cert: fs.readFileSync("/etc/pki/tls/certs/mdn-samples.mozilla.org.crt")
+  key: null,
+  cert: null
 };
+
+try {
+  httpsOptions.key = fs.readFileSync(keyFilePath);
+  try {
+    httpsOptions.cert = fs.readFileSync(certFilePath);
+  } catch(err) {
+    httpsOptions.key = null;
+    httpsOptions.cert = null;
+  }
+} catch(err) {
+  httpsOptions.key = null;
+  httpsOptions.cert = null;
+}
+
+// If we were able to get the key and certificate files, try to
+// start up an HTTPS server.
+
+var webServer = null;
+
+try {
+  if (httpsOptions.key && httpsOptions.cert) {
+    webServer = https.createServer(httpsOptions, handleWebRequest);
+  }
+} catch(err) {
+  webServer = null;
+}
+
+if (!webServer) {
+  try {
+    webServer = http.createServer({}, handleWebRequest);
+  } catch(err) {
+    webServer = null;
+    log(`Error attempting to create HTTP(s) server: ${err.toString()}`);
+  }
+}
+
 
 // Our HTTPS server does nothing but service WebSocket
 // connections, so every request just returns 404. Real Web
 // requests are handled by the main server on the box. If you
 // want to, you can return real HTML here and serve Web content.
 
-var httpsServer = https.createServer(httpsOptions, function(request, response) {
-  log("Received secure request for " + request.url);
+function handleWebRequest(request, response) {
+  log ("Received request for " + request.url);
   response.writeHead(404);
   response.end();
-});
+}
 
 // Spin up the HTTPS server on the port assigned to this sample.
 // This will be turned into a WebSocket port very shortly.
 
-httpsServer.listen(6503, function() {
+webServer.listen(6503, function() {
   log("Server is listening on port 6503");
 });
 
 // Create the WebSocket server by converting the HTTPS server into one.
 
 var wsServer = new WebSocketServer({
-  httpServer: httpsServer,
+  httpServer: webServer,
   autoAcceptConnections: false
 });
 
