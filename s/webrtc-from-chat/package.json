@@ -16,6 +16,6 @@
   },
   "dependencies": {
     "webrtc-adapter": "^1.4.0",
-    "websocket": "^1.0.28"
+    "websocket": "^1.0.29"
   }
 }
