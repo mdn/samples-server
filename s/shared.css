@@ -2,12 +2,12 @@
     Styles to share across samples
  */
 
- html {
-   font-family:'Open Sans', 'Lucida Grande', Arial, Helvetica, sans-serif;
- }
+ html, body {
+  height: 100%;
+  font-family:'Open Sans', 'Lucida Grande', Arial, Helvetica, sans-serif;
+}
 
 .mdn-disclaimer {
-  font-family:'Open Sans', 'Lucida Grande', Arial, Helvetica, sans-serif;
   font-size:18px;
   background-color: #ddd;
   color: black;
@@ -23,7 +23,6 @@
 .mdn-footer {
 	font-weight:normal;
 	font-size:12px;
-	font-family:'Lucida Grande', Arial, Helvetica, sans-serif;
 	text-align:right;
 	border-top:2px solid #000000;
 }

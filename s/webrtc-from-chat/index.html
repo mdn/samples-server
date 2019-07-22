@@ -25,50 +25,31 @@
   <script src="adapter.js"></script>
 </head>
 <body>
-  <p>This is a simple chat system implemented using WebSockets. It works by
-  sending packets of JSON back and forth with the server.
-  <a href="https://github.com/mdn/samples-server/tree/master/s/webrtc-from-chat">
-  Check out the source</a> on Github.</p>
-  <p class="mdn-disclaimer">This text and audio/video chat example is offered as-is
-    for demonstration purposes only, and should not be used for any other
-    purpose.</p>
-  <p>Click a username in the user list to ask them to enter a one-on-one video
-    chat with you.</p>
-  <p>Enter a username: <input id="name" type="text" maxlength="12" required
-      autocomplete="username" inputmode="verbatim" placeholder="Username">
-  <input type="button" name="login" value="Log in" onclick="connect()"></p>
-
-  <div id="container" class="flexChild columnParent">
-    <div class="flexChild rowParent">
-      <div class="flexChild rowParent">
-        <div class="flexChild" id="userlist-container">
-          <ul id="userlistbox"></ul>
-        </div>
-        <div class="flexChild" id="chat-container">
-          <iframe id="chatbox"></iframe>
-        </div>
-      </div>
-
-      <div class="flexChild" id="camera-container">
-        <div class="camera-box">
-          <video id="received_video" autoplay></video>
-          <video id="local_video" autoplay muted></video>
-          <button id="hangup-button" onclick="hangUpCall();" disabled>
-            Hang Up
-          </button>
-        </div>
-      </div>
+  <div class="container">
+    <div class="infobox">
+      <p>This is a simple chat system implemented using WebSockets. It works by sending packets of JSON back and forth with the server.
+        <a href="https://github.com/mdn/samples-server/tree/master/s/webrtc-from-chat">
+      Check out the source</a> on Github.</p>
+      <p class="mdn-disclaimer">This text and audio/video chat example is offered as-is for demonstration purposes only, and should not be used for any other purpose.
+      </p>
+      <p>Click a username in the user list to ask them to enter a one-on-one video chat with you.</p>
+      <p>Enter a username: <input id="name" type="text" maxlength="12" required autocomplete="username" inputmode="verbatim" placeholder="Username">
+        <input type="button" name="login" value="Log in" onclick="connect()"></p>
     </div>
-
-    <div class="flexChild rowParent" id="control-row">
-      <div class="flexChild" id="empty-container"></div>
-      <div class="flexChild" id="chat-controls-container">
-        Chat: <input id="text" type="text" name="text" size="80" maxlength="256"
-          placeholder="Chat with us!" autocomplete="off" onkeyup="handleKey(event)"
-          disabled>
-        <input type="button" id="send" name="send" value="Send"
-          onclick="handleSendButton()" disabled>
-      </div>
+    <ul class="userlistbox"></ul>
+    <div class="chatbox"></div>
+    <div class="camerabox">
+      <video id="received_video" autoplay></video>
+      <video id="local_video" autoplay muted></video>
+      <button id="hangup-button" onclick="hangUpCall();" role="button" disabled>
+        Hang Up
+      </button>
+    </div>
+    <div class="empty-container"></div>
+    <div class="chat-controls">
+      Chat:<br/>
+      <input id="text" type="text" name="text" size="100" maxlength="256" placeholder="Say something meaningful..." autocomplete="off" onkeyup="handleKey(event)" disabled>
+      <input type="button" id="send" name="send" value="Send" onclick="handleSendButton()" disabled>
     </div>
   </div>
 </body>

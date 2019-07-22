@@ -39,7 +39,11 @@ var clientID = 0;
 
 var mediaConstraints = {
   audio: true,            // We want an audio track
-  video: true             // ...and we want a video track
+  video: {
+    aspectRatio: {
+      ideal: 1.333333     // 3:2 aspect is preferred
+    }
+  }
 };
 
 var myUsername = null;
@@ -116,7 +120,7 @@ function connect() {
   }
 
   connection.onmessage = function(evt) {
-    var chatFrameDocument = document.getElementById("chatbox").contentDocument;
+    var chatBox = document.querySelector(".chatbox");
     var text = "";
     var msg = JSON.parse(evt.data);
     log("Message received: ");
@@ -179,8 +183,8 @@ function connect() {
     // scroll the chat panel so that the new text is visible.
 
     if (text.length) {
-      chatFrameDocument.write(text);
-      document.getElementById("chatbox").contentWindow.scrollByPages(1);
+      chatBox.innerHTML += text;
+      chatBox.scrollTop = chatBox.scrollHeight - chatBox.clientHeight;
     }
   };
 }
@@ -370,8 +374,7 @@ function handleICEGatheringStateChangeEvent(event) {
 
 function handleUserlistMsg(msg) {
   var i;
-
-  var listElem = document.getElementById("userlistbox");
+  var listElem = document.querySelector(".userlistbox");
 
   // Remove all current list members. We could do this smarter,
   // by adding and updating users instead of rebuilding from
@@ -381,15 +384,15 @@ function handleUserlistMsg(msg) {
     listElem.removeChild(listElem.firstChild);
   }
 
-  // Add member names from the received list
+  // Add member names from the received list.
 
-  for (i=0; i < msg.users.length; i++) {
+  msg.users.forEach(function(username) {
     var item = document.createElement("li");
-    item.appendChild(document.createTextNode(msg.users[i]));
+    item.appendChild(document.createTextNode(username));
     item.addEventListener("click", invite, false);
 
     listElem.appendChild(item);
-  }
+  });
 }
 
 // Close the RTCPeerConnection and reset variables so that the user can
