@@ -418,7 +418,7 @@ function closeVideoCall() {
     myPeerConnection.oniceconnectionstatechange = null;
     myPeerConnection.onsignalingstatechange = null;
     myPeerConnection.onicegatheringstatechange = null;
-    myPeerConnection.onnotificationneeded = null;
+    myPeerConnection.onnegotiationneeded = null;
 
     // Stop all transceivers on the connection
 
