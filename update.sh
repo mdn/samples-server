@@ -93,7 +93,7 @@ else
 fi;
 
 echo "Starting TURN/STUN server..."
-turnserver --syslog -a -o -L $LOCAL_IP -X $PUBLIC_IP -E $LOCAL_IP -f --min-port=32355 --max-port=65535 --user=webrtc:turnserver -r mdnSamples --log-file=stdout -v
+/usr/local/bin/turnserver --syslog -a -o -L $LOCAL_IP -X $PUBLIC_IP -E $LOCAL_IP -f --min-port=32355 --max-port=65535 --user=webrtc:turnserver -r mdnSamples --log-file=stdout -v
 
 # Start spinning up Sample Server stuff here
 
