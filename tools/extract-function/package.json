@@ -17,5 +17,9 @@
   "dependencies": {
     "express": "^4.12.4",
     "function-extractor": "0.0.5"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.6",
+    "@types/node": "^13.11.1"
   }
 }

@@ -22,5 +22,10 @@
   "dependencies": {
     "escape-html": "^1.0.3",
     "express": "^4.16.4"
+  },
+  "devDependencies": {
+    "@types/escape-html": "0.0.20",
+    "@types/node": "^13.11.1",
+    "@types/websocket": "^1.0.0"
   }
 }
