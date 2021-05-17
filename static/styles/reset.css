@@ -1,0 +1,21 @@
+@charset "UTF-8";
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
+
+/* A stylesheet which fixes some annoyances with slightly different
+ * or legacy behaviour of UAs and CSS when rendering pages */
+*|*, ::before, ::after {
+	/* Always use `box-sizing: border-box;` for everything */
+	box-sizing: border-box;
+}
+
+html,
+body {
+	/* Ensure that <html> and <body> doesn’t weirdly stretch out
+	 * horizontally beyond the viewport, adding a horizontal scrollbar,
+	 * which is very annoying when on mobile, especially on responsive,
+	 * mobile‑first websites. */
+	margin: unset;
+	max-width: 100vw;
+	overflow-x: hidden;
+}
