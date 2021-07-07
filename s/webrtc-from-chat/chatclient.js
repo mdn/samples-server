@@ -478,7 +478,7 @@ function hangUpCall() {
 // Handle a click on an item in the user list by inviting the clicked
 // user to video chat. Note that we don't actually send a message to
 // the callee here -- calling RTCPeerConnection.addTrack() issues
-// a |notificationneeded| event, so we'll let our handler for that
+// a |negotiationneeded| event, so we'll let our handler for that
 // make the offer.
 
 async function invite(evt) {
